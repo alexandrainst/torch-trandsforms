@@ -8,10 +8,10 @@ name = "torch-trandsforms"
 version = "0.1.0"
 description = "A pytorch-first transform library for ND data, such as multi-channel 3D volumes"
 readme = "README.md"
-authors = ["Alexandra Instituttet A/S <oliver.gyldenberg@alexandra.dk>"]
+authors = ["Oliver Hjermitslev <oliver.gyldenberg@alexandra.dk>"]
 license = "MIT"
-repository = "https://github.com/ohjerm/torch-trandsforms"
-homepage = "https://github.com/ohjerm/torch-trandsforms"
+repository = "https://github.com/alexandrainst/torch-trandsforms"
+homepage = "https://github.com/alexandrainst/torch-trandsforms"
 
 # Keywords description https://python-poetry.org/docs/pyproject/#keywords
 keywords = []  #! Update me
@@ -26,6 +26,7 @@ classifiers = [  #! Update me
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
 ]
 
 
@@ -35,10 +36,10 @@ python = "^3.8"
 
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.1"
-black = {version = "^21.10b0", allow-prereleases = true}
+black = {version = "^22.3.0", allow-prereleases = true}
 darglint = "^1.8.1"
 isort = {extras = ["colors"], version = "^5.10.1"}
-mypy = "^0.910"
+mypy = "^0.991"
 mypy-extensions = "^0.4.3"
 pre-commit = "^2.15.0"
 pydocstyle = "^6.1.1"

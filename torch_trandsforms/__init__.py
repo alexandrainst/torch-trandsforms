@@ -1,12 +1,7 @@
-# type: ignore[attr-defined]
 """A pytorch-first transform library for ND data, such as multi-channel 3D volumes"""
 
 import sys
-
-if sys.version_info >= (3, 8):
-    from importlib import metadata as importlib_metadata
-else:
-    import importlib_metadata
+from importlib import metadata as importlib_metadata
 
 
 def get_version() -> str:

@@ -10,7 +10,7 @@ VERSION := latest
 #* Poetry
 .PHONY: poetry-download
 poetry-download:
-	curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | $(PYTHON) -
+	curl -sSL https://install.python-poetry.org/ | $(PYTHON) -
 
 .PHONY: poetry-remove
 poetry-remove:
@@ -21,7 +21,7 @@ poetry-remove:
 install:
 	poetry lock -n && poetry export --without-hashes > requirements.txt
 	poetry install -n
-	-poetry run mypy --install-types --non-interactive ./
+	-poetry run mypy --install-types --non-interactive --warn-unused-ignores ./
 
 .PHONY: pre-commit-install
 pre-commit-install:
