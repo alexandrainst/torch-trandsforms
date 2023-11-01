@@ -1,0 +1,13 @@
+# This file contains values from Cookiecutter
+
+default_context:
+  project_name: "torch-trandsforms"
+  project_description: "A pytorch-first transform library for ND data, such as multi-channel 3D volumes"
+  organization: "Alexandra Instituttet A/S"
+  license: "MIT"
+  minimal_python_version: 3.8
+  github_name: "ohjerm"
+  email: "oliver.gyldenberg@alexandra.dk"
+  version: "0.1.0"
+  line_length: "140"
+  create_example_template: "none"
