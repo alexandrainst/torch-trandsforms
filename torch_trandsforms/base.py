@@ -32,7 +32,7 @@ class BaseTransform(torch.nn.Module):
         return {}
 
     def __call__(self, **inputs):
-        if random.random() < self.p:
+        if torch.rand(1).item() < self.p:
             params = self.get_parameters(**inputs)
 
             for key, value in inputs.items():
@@ -60,7 +60,7 @@ class KeyedTransform(BaseTransform):
         self.keys = keys
 
     def __call__(self, **inputs):
-        if random.random() < self.p:
+        if torch.rand(1).item() < self.p:
             params = self.get_parameters(**inputs)
 
             for key, value in inputs.items():
