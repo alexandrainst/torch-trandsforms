@@ -3,6 +3,9 @@
 import sys
 from importlib import metadata as importlib_metadata
 
+from .rotation import RandomRotate90
+from .value import UniformNoise
+
 
 def get_version() -> str:
     try:

@@ -1,3 +1,7 @@
+"""
+Contains rotation transforms
+"""
+
 import torch
 
 from .base import BaseTransform

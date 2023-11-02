@@ -14,7 +14,7 @@ repository = "https://github.com/alexandrainst/torch-trandsforms"
 homepage = "https://github.com/alexandrainst/torch-trandsforms"
 
 # Keywords description https://python-poetry.org/docs/pyproject/#keywords
-keywords = []  #! Update me
+keywords = ["pytorch", "transforms", "torchvision", "data"]  #! Update me
 
 # Pypi classifiers: https://pypi.org/classifiers/
 classifiers = [  #! Update me
