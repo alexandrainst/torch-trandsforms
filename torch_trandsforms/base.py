@@ -32,6 +32,15 @@ class BaseTransform(torch.nn.Module):
         return {}
 
     def __call__(self, **inputs):
+        """
+        Calls `apply` on each input with same params for each
+
+        Args:
+            inputs (any): keyword args containing `torch.Tensor`s or whatever else the transform calls for
+
+        Returns:
+            dict: resulting outputs dict where the relevant inputs have been transformed
+        """
         if torch.rand(1).item() < self.p:
             params = self.get_parameters(**inputs)
 
@@ -60,6 +69,15 @@ class KeyedTransform(BaseTransform):
         self.keys = keys
 
     def __call__(self, **inputs):
+        """
+        Calls `apply` on each named input (given during __init__) with same params for each
+
+        Args:
+            inputs (any): keyword args containing `torch.Tensor`s or whatever else the transform calls for
+
+        Returns:
+            dict: resulting outputs dict where the relevant inputs have been transformed
+        """
         if torch.rand(1).item() < self.p:
             params = self.get_parameters(**inputs)
 
