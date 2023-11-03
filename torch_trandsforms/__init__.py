@@ -4,6 +4,7 @@ import sys
 from importlib import metadata as importlib_metadata
 
 from .rotation import RandomRotate90
+from .structure import Compose
 from .value import UniformNoise
 
 

@@ -8,6 +8,8 @@ import torch
 
 from .base import KeyedTransform
 
+__all__ = ["UniformNoise"]
+
 
 class UniformNoise(KeyedTransform):
     """

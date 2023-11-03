@@ -6,6 +6,8 @@ import torch
 
 from .base import NdTransform
 
+__all__ = ["RandomRotate90"]
+
 
 class RandomRotate90(NdTransform):  # note the use of NdTransform as base class
     """
