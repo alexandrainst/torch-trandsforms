@@ -14,8 +14,8 @@ class RandomRotate90(KeyedNdTransform):  # note the use of NdTransform as base c
     Rotates the input 90 degrees around a randomly determined axis
     """
 
-    def __init__(self, nd=3, p=0.5):
-        super().__init__(p=p, nd=nd)
+    def __init__(self, nd=3, p=0.5, keys="*"):
+        super().__init__(p=p, nd=nd, keys=keys)
         self.options = self._get_options(nd)
 
     def _get_options(self, nd):
@@ -65,9 +65,3 @@ class RandomRotate90(KeyedNdTransform):  # note the use of NdTransform as base c
         """
         rot = params["rot"]
         return torch.rot90(input, dims=rot)
-
-
-class RandomRotate(KeyedNdTransform):
-    """
-    Randomly rotate the trailing N dimensions of each input around its central axis with the same parameters
-    """

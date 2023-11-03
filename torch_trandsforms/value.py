@@ -11,7 +11,7 @@ __all__ = ["UniformNoise"]
 
 class UniformNoise(KeyedTransform):
     """
-    The simplest form of noise, Uniform Noise adds noise to every value of the input input
+    The simplest form of noise, Uniform Noise adds noise to every value of the input
         based on a uniform distribution of [low, hi)
 
     Args:
