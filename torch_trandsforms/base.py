@@ -21,6 +21,7 @@ class BaseTransform(torch.nn.Module):
     """
 
     def __init__(self, p=1.0):
+        super().__init__()
         assert 0 <= p <= 1, "p value must be in the range 0-1 (inclusive)"
         self.p = p
 
@@ -108,7 +109,7 @@ class NdTransform(BaseTransform):
         assert isinstance(nd, int), "nd must be an integer value"
         self.nd = nd
 
-    def __check_nd_compliance(self, key, value):
+    def _check_nd_compliance(self, key, value):
         """Checks that input is correct dimensionality (if it even is a tensor)
         this does not check for compliance with expected input types"""
         if isinstance(value, torch.Tensor) and value.ndim < self.nd:
@@ -125,7 +126,7 @@ class NdTransform(BaseTransform):
             dict: resulting outputs dict where the relevant inputs have been transformed
         """
         for key, value in inputs.items():
-            self.__check_nd_compliance(key, value)
+            self._check_nd_compliance(key, value)
 
         return super().__call__(**inputs)
 
@@ -165,7 +166,7 @@ class KeyedNdTransform(KeyedTransform, NdTransform):
             params = self.get_parameters(**inputs)
 
             for key, value in inputs.items():
-                self.__check_nd_compliance(key, value)
+                self._check_nd_compliance(key, value)
                 if key in self.keys or self.keys == "*":
                     inputs[key] = self.apply(value, **params)
 

@@ -2,8 +2,6 @@
 Contains value-level transformations, normally noise intended for specific keys
 """
 
-from numbers import Number
-
 import torch
 
 from .base import KeyedTransform
