@@ -65,3 +65,9 @@ class RandomRotate90(NdTransform):  # note the use of NdTransform as base class
         """
         rot = params["rot"]
         return torch.rot90(input, dims=rot)
+
+
+class RandomRotate(NdTransform):
+    """
+    Randomly rotate the trailing N dimensions of each input around its central axis with the same parameters
+    """

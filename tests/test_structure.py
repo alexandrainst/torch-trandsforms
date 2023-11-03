@@ -9,7 +9,7 @@ from torch_trandsforms.value import UniformNoise
 def test_compose():
     """test Compose"""
 
-    transform = Compose([RandomRotate90(), UniformNoise()])
+    transform = Compose([RandomRotate90(p=1.0), UniformNoise(p=1.0)])
 
     assert "RandomRotate90" in str(transform)
     assert "UniformNoise" in str(transform)
