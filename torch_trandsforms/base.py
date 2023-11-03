@@ -50,6 +50,9 @@ class BaseTransform(torch.nn.Module):
     def apply(self, input, **params):
         raise NotImplementedError("BaseTransform is a superclass with no utility. Extend it using `class MyTransform(BaseTransform)`")
 
+    def __repr__(self):
+        return self.__class__.__name__ + f"(p = {self.p})"
+
 
 class KeyedTransform(BaseTransform):
     """
@@ -86,6 +89,9 @@ class KeyedTransform(BaseTransform):
 
         return inputs
 
+    def __repr__(self):
+        return self.__class__.__name__ + f"(p = {self.p}, keys = {self.keys})"
+
 
 class NdTransform(BaseTransform):
     """
@@ -101,3 +107,6 @@ class NdTransform(BaseTransform):
         assert 0 < nd, "nd (num dimensions) must be greater than 0"
         assert isinstance(nd, int), "nd must be an integer value"
         self.nd = nd
+
+    def __repr__(self):
+        return self.__class__.__name__ + f"(p = {self.p}, nd = {self.nd})"

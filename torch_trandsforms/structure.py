@@ -1,3 +1,5 @@
+"""Structural classes like Compose, Random Apply, etc"""
+
 import torch
 
 __all__ = ["Compose"]
