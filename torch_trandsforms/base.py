@@ -16,15 +16,11 @@ class BaseTransform(torch.nn.Module):
 
     Args:
         p (float): Probability of the transform activating on call - set to 1 to force use
-        nd (int): Number of dimensions to operate on
     """
 
-    def __init__(self, p=1.0, nd=3):
+    def __init__(self, p=1.0):
         assert 0 <= p <= 1, "p value must be in the range 0-1 (inclusive)"
         self.p = p
-
-        assert 0 < nd, "nd (num dimensions) must be greater than 0"
-        self.nd = nd
 
     def get_parameters(self, **inputs):
         # return the parameters used for all inputs
@@ -62,8 +58,8 @@ class KeyedTransform(BaseTransform):
         keys (list): List of `inputs` keys to operate on
     """
 
-    def __init__(self, p=1.0, nd=3, keys=[]):
-        super().__init__(p=p, nd=nd)
+    def __init__(self, p=1.0, keys=[]):
+        super().__init__(p=p)
         if len(keys) == 0:
             RuntimeWarning(f"Keyed transform {self.__class__.__name__} expected at least one key but got 0")
         self.keys = keys
@@ -86,3 +82,19 @@ class KeyedTransform(BaseTransform):
                     inputs[key] = self.apply(value, **params)
 
         return inputs
+
+
+class NdTransform(BaseTransform):
+    """
+    A dimensionality-aware transform
+
+    Args:
+        nd (int): Number of dimensions, trailing, to operate on
+    """
+
+    def __init__(self, p=1.0, nd=3):
+        super().__init__(p=p)
+
+        assert 0 < nd, "nd (num dimensions) must be greater than 0"
+        assert isinstance(nd, int), "nd must be an integer value"
+        self.nd = nd

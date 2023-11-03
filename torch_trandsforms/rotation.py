@@ -4,10 +4,10 @@ Contains rotation transforms
 
 import torch
 
-from .base import BaseTransform
+from .base import NdTransform
 
 
-class RandomRotate90(BaseTransform):  # note the use of BaseTransform as base class
+class RandomRotate90(NdTransform):  # note the use of NdTransform as base class
     """
     Rotates the input 90 degrees around a randomly determined axis
     """

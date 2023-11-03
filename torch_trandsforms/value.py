@@ -19,8 +19,8 @@ class UniformNoise(KeyedTransform):
         hi: maximum value to add
     """
 
-    def __init__(self, low=-1, hi=1, p=0.5, nd=3, keys=[]):
-        super().__init__(p=p, nd=nd, keys=keys)
+    def __init__(self, low=-1, hi=1, p=0.5, keys=[]):
+        super().__init__(p=p, keys=keys)
         if not isinstance(low, (float, int)):
             raise ValueError("low must be a real number")
         if not isinstance(hi, (float, int)):
