@@ -55,14 +55,15 @@ class KeyedTransform(BaseTransform):
     """
     As BaseTransform but operates only on the keys provided (i.e. only on "target", "data", etc)
     Useful for things that do not operate on the structure of the inputs (such as rotation), but instead on the values (such as noise) that are not desirable to introduce in the target data (or vice versa)
+    Note that any KeyedTransform can operate on all given inputs if `keys == '*'` (default)
 
     Args:
-        keys (list): List of `inputs` keys to operate on
+        keys (`list` or `'*'`): List of inputs keys to operate on, or '*' to indicate any given key
     """
 
-    def __init__(self, p=1.0, keys=[]):
+    def __init__(self, p=1.0, keys="*"):
         super().__init__(p=p)
-        if len(keys) == 0:
+        if len(keys) == 0:  # only warns if keys is a 0-length iterable
             RuntimeWarning(f"Keyed transform {self.__class__.__name__} expected at least one key but got 0")
         self.keys = keys
 
@@ -80,7 +81,7 @@ class KeyedTransform(BaseTransform):
             params = self.get_parameters(**inputs)
 
             for key, value in inputs.items():
-                if key in self.keys:
+                if key in self.keys or self.keys == "*":
                     inputs[key] = self.apply(value, **params)
 
         return inputs
