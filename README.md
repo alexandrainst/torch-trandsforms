@@ -24,6 +24,7 @@ torch traNDsforms is in early alpha and may have bugs and a significant lack of 
 torch traNDsforms is an easy to use transform library for N-dimensional PyTorch data
 
  - Compatible with nearly any `torch.Tensor`
+ - One transform pipeline for all your data
  - Customizable and lightweight
  - No superfluous dependencies
  - Collaborative
@@ -130,6 +131,13 @@ Please use [Issues](https://github.com/alexandrainst/torch-trandsforms/issues) f
 For now, traNDsforms is in early alpha. That will continue for a while, while basic functionality is implemented.
 
 The roadmap is determined by the collaborative efforts of every user that provides feedback, reports bugs, or produces pull requests. Thank you!
+
+For now, the roadmap looks something like this:
+ - [ ] Implement basic functionality (normalize, dtype changing)
+ - [ ] Implement value-level noise functionality (salt and pepper, gaussian)
+ - [ ] Implement structural transforms (scaling, cropping)
+ - [ ] More examples, including better visuals
+ - [ ] Development structure: Lock main && publish
 
 ## Contributing
 
