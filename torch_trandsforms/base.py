@@ -3,7 +3,7 @@ import random
 import torch
 import torchvision
 
-__all__ = ["BaseTransform", "KeyedTransform", "NdTransform"]
+__all__ = ["BaseTransform", "KeyedTransform", "NdTransform", "KeyedNdTransform"]
 
 
 class BaseTransform(torch.nn.Module):
