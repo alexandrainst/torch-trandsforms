@@ -9,10 +9,12 @@ from torch_trandsforms.value import UniformNoise
 def test_compose():
     """test Compose"""
 
-    transform = Compose([RandomRotate90(p=1.0), UniformNoise(p=1.0)])
+    repr_less_transform = RandomApply([RandomRotate90(p=1.0)])
+    transform = Compose([RandomRotate90(p=1.0), UniformNoise(p=1.0), repr_less_transform])
 
     assert "RandomRotate90" in str(transform)
     assert "UniformNoise" in str(transform)
+    assert "RandomApply" in repr(transform)
 
     tensor = torch.arange(16, dtype=torch.float).view(2, 2, 2, 2)
     transformed = transform(tensor=tensor)["tensor"]
@@ -29,6 +31,7 @@ def test_compose():
         (1, 2, 4, [1, 2, 3], False, ValueError),
         (4, 5, 3, [1, 1, 1], False, ValueError),
         (1, 3, 3, [1, 2, 1], True, None),
+        (2, 2, 4, [1, 1, 1, 1], False, None),
     ],
 )
 def test_random_apply(min, max, N_t, p, allow_same, expected_error):
@@ -42,6 +45,8 @@ def test_random_apply(min, max, N_t, p, allow_same, expected_error):
     else:
         applier = RandomApply([rot] * N_t, min=min, max=max, p=p, allow_same=allow_same)
         tensor = torch.arange(16, dtype=torch.float).view(2, 2, 2, 2)
+
+        assert "RandomRotate90" in repr(applier)
 
         transformed = applier(tensor=tensor)["tensor"]
 

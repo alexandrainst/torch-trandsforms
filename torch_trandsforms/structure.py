@@ -69,7 +69,7 @@ class RandomApply:
         assert min >= 0, "min must not be negative"
         assert isinstance(min, int), "min must be an integer"
         assert isinstance(max, int), "max must be an integer"
-        assert max > min, "max must be greater than min"
+        assert max >= min, "max must be greater than or equal to min"
 
         assert isinstance(transforms, list), "transforms must be a list (not a single transform, for example)"
 
@@ -106,11 +106,12 @@ class RandomApply:
             for i in range(1, len(cumsum)):  # find where the random value slots in
                 if p >= cumsum[i]:
                     inputs = transforms[i](**inputs)
-                    break
 
-            if not self.allow_same:
-                del probs[i]
-                del transforms[i]
+                    if not self.allow_same:
+                        del probs[i]
+                        del transforms[i]
+
+                    break
 
         return inputs
 
