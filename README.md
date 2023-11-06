@@ -144,3 +144,16 @@ Oliver G. Hjermitslev (ohjerm) <oliver.gyldenberg@alexandra.dk>
 ## License
 
 See the [MIT License](https://github.com/alexandrainst/torch-trandsforms/blob/main/LICENSE)
+
+## 📃 Citation
+
+```bibtex
+@misc{torch-trandsforms,
+  author = {Alexandra Institute},
+  title = {A pytorch-first transform library for ND data, such as multi-channel 3D volumes},
+  year = {2023},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/alexandrainst/torch-trandsforms}}
+}
+```

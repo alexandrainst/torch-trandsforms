@@ -4,8 +4,10 @@ import sys
 from importlib import metadata as importlib_metadata
 
 from .rotation import RandomRotate90
-from .structure import Compose
+from .structure import Compose, RandomApply
 from .value import UniformNoise
+
+__all__ = sorted(["RandomRotate90", "Compose", "RandomApply", "UniformNoise"])
 
 
 def get_version() -> str:
