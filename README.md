@@ -137,6 +137,8 @@ See [Contributing](https://github.com/alexandrainst/torch-trandsforms/blob/main/
 
 ## Authors
 
+The project is maintained by employees at the [Alexandra Institute](https://alexandra.dk/)
+
 Oliver G. Hjermitslev (ohjerm) <oliver.gyldenberg@alexandra.dk>
 
 ...to be expanded...
