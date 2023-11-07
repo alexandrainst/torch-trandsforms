@@ -133,7 +133,7 @@ For now, traNDsforms is in early alpha. That will continue for a while, while ba
 The roadmap is determined by the collaborative efforts of every user that provides feedback, reports bugs, or produces pull requests. Thank you!
 
 For now, the roadmap looks something like this:
- - [ ] Implement basic functionality (normalize, dtype changing, change device)
+ - [x] Implement basic functionality (normalize, dtype changing, change device)
  - [ ] Implement value-level noise functionality (uniform, salt and pepper, gaussian)
  - [ ] Implement structural transforms (scaling, cropping)
  - [ ] More examples, including better visuals

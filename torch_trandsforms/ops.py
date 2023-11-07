@@ -4,7 +4,7 @@ import torch
 
 from .base import KeyedTransform
 
-__all__ = ["Cast", "ConvertDtype"]
+__all__ = ["Cast", "ConvertDtype", "ToDevice", "To"]
 
 type_str_to_type = {
     "float": torch.float32,
@@ -78,6 +78,9 @@ class Cast(KeyedTransform):
         raise TypeError(f"Found wrong argument type {type(dtype)}, expected one of `str`, `torch.dtype`, or `list`")
 
     def _get_current_dtype(self, key):
+        """
+        Returns the dtype associated with the key
+        """
         if isinstance(self.dtypes, torch.dtype):
             return self.dtypes
         return self.dtypes[self.keys.index(key)]
@@ -91,6 +94,55 @@ class Cast(KeyedTransform):
 class ConvertDtype(Cast):
     """
     Alias for `Cast`
+    """
+
+    pass
+
+
+class ToDevice(KeyedTransform):
+    """
+    Sends the named tensors to the target device(s)
+
+    Args:
+        device (str or torch.device, or list of these)
+    """
+
+    def __init__(self, device, p=1, keys="*", **kwargs):
+        super().__init__(p, keys, **kwargs)
+        self.device = self._extract_device(device)
+
+        if isinstance(self.device, list) and self.keys == "*":
+            raise ValueError(f"If device is list, keys must be specified (and have the same length)")
+        elif isinstance(self.device, list) and isinstance(self.keys, list):
+            if len(self.device) != len(self.keys):
+                raise ValueError(f"list of device (len = {len(self.device)}) must equal length of keys (len = {len(self.keys)})")
+
+    def _extract_device(self, device):
+        """
+        Attempts to extract the device from the input dtype (converting str or list to torch.dtype(s))
+        """
+        if isinstance(device, torch.device):
+            return device
+        if isinstance(device, str):
+            return torch.device(device)
+        if isinstance(device, list):
+            return [self._extract_device(d) for d in device]
+        raise TypeError(f"Found wrong argument type {type(device)}, expected one of `str`, `torch.dtype`, or `list`")
+
+    def _get_current_device(self, key):
+        if isinstance(self.device, torch.device):
+            return self.device
+        return self.device[self.keys.index(key)]
+
+    def apply(self, input, **params):
+        ckey = params["key_name"]
+        device = self._get_current_device(ckey)
+        return input.to(device)
+
+
+class To(ToDevice):
+    """
+    Alias for `ToDevice`
     """
 
     pass
