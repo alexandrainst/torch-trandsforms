@@ -36,6 +36,7 @@ def test_uniform(lo, hi, dtype):
         (0, 1.0, 3, (36, 36, 36), None),
         ([1, 2, 3], 1, 3, (2, 48, 24, 12), RuntimeError),
         ([1, 2, 3], [1, 2, 3], 2, (3, 24, 24, 24), RuntimeError),
+        ([[1, 2], [2, 3]], 1.0, 2, (2, 2, 16, 16), None),
     ],
 )
 def test_normalize(mean, std, nd, input, expected):

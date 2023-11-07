@@ -24,7 +24,7 @@ torch traNDsforms is in early alpha and may have bugs and a significant lack of 
 torch traNDsforms is an easy to use transform library for N-dimensional PyTorch data
 
  - Compatible with nearly any `torch.Tensor`
- - One transform pipeline for all your data
+ - One transform pipeline for all your data using `KeyedTransforms`
  - Customizable and lightweight
  - No superfluous dependencies
  - Collaborative
@@ -63,7 +63,7 @@ Creating the RandomRotate90 class, as an example of customizing your own transfo
 import torch
 from torch_trandsforms.base import BaseTransform
 
-class RandomRotate90(BaseTransform):  # note the use of BaseTransform as base class
+class RandomRotate90(BaseTransform):  # note the use of BaseTransform as base class here
     """
     Rotates the input 90 degrees around a randomly determined axis
     """
@@ -134,7 +134,7 @@ The roadmap is determined by the collaborative efforts of every user that provid
 
 For now, the roadmap looks something like this:
  - [ ] Implement basic functionality (normalize, dtype changing, change device)
- - [ ] Implement value-level noise functionality (salt and pepper, gaussian)
+ - [ ] Implement value-level noise functionality (uniform, salt and pepper, gaussian)
  - [ ] Implement structural transforms (scaling, cropping)
  - [ ] More examples, including better visuals
  - [ ] Development structure: Lock main && publish
@@ -145,9 +145,9 @@ See [Contributing](https://github.com/alexandrainst/torch-trandsforms/blob/main/
 
 ## Authors
 
-The project is maintained by employees at the [Alexandra Institute](https://alexandra.dk/)
+The project is maintained by developers at the [Alexandra Institute](https://alexandra.dk/)
 
-Oliver G. Hjermitslev (ohjerm) <oliver.gyldenberg@alexandra.dk>
+ - Oliver G. Hjermitslev (ohjerm) <oliver.gyldenberg@alexandra.dk>
 
 ...to be expanded...
 

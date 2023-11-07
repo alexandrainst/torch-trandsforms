@@ -74,6 +74,7 @@ class KeyedTransform(BaseTransform):
     def __call__(self, **inputs):
         """
         Calls `apply` on each named input (given during __init__) with same params for each
+        Extends `**params` with the input key under 'key_name' for use in apply
 
         Args:
             inputs (any): keyword args containing `torch.Tensor`s or whatever else the transform calls for
@@ -86,6 +87,7 @@ class KeyedTransform(BaseTransform):
 
             for key, value in inputs.items():
                 if key in self.keys or self.keys == "*":
+                    params["key_name"] = key
                     inputs[key] = self.apply(value, **params)
 
         return inputs
@@ -154,7 +156,8 @@ class KeyedNdTransform(KeyedTransform, NdTransform):
             ensuring a named input complies with dimensionality.
             Keep in mind this functionality only activates when the call to apply would,
             i.e. when the random generator is lower than the threshold and the key exists in the
-            list of named keys
+            list of named keys (or keys=="*")
+        Extends `**params` with the input key under 'key_name' for use in `apply`
 
         Args:
             inputs (any): keyword args containing `torch.Tensor`s or whatever else the transform calls for
@@ -168,6 +171,7 @@ class KeyedNdTransform(KeyedTransform, NdTransform):
             for key, value in inputs.items():
                 self._check_nd_compliance(key, value)
                 if key in self.keys or self.keys == "*":
+                    params["key_name"] = key
                     inputs[key] = self.apply(value, **params)
 
         return inputs
