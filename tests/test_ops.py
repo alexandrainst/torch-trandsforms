@@ -57,6 +57,8 @@ def test_cast(dtypes, keys, expected):
 )
 def test_todevice(devices, keys, expected):
     """Tests ToDevice and its alias To"""
+
+    # change `expected` to RuntimeError when cuda is necessary but unavailable
     if not torch.cuda.is_available() and expected is None:
         if (isinstance(devices, torch.device) and devices.type == "cuda") or (isinstance(devices, str) and devices == "cuda"):
             expected = RuntimeError
@@ -64,6 +66,8 @@ def test_todevice(devices, keys, expected):
             for dev in devices:
                 if (isinstance(dev, torch.device) and dev.type == "cuda") or (isinstance(dev, str) and dev == "cuda"):
                     expected = RuntimeError
+
+    # test ToDevice with `expected` error (if any)
     with pytest.raises(expected) if expected is not None else nullcontext():
         caster = ToDevice(device=devices, keys=keys)
 

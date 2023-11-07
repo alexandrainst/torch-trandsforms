@@ -6,9 +6,23 @@ from importlib import metadata as importlib_metadata
 from .ops import Cast, ConvertDtype, To, ToDevice
 from .rotation import RandomRotate90
 from .structure import Compose, RandomApply
-from .value import Normalize, UniformNoise
+from .value import AdditiveBetaNoise, Normalize, SaltAndPepperNoise, UniformNoise
 
-__all__ = sorted(["RandomRotate90", "Compose", "RandomApply", "UniformNoise", "Normalize", "Cast", "ConvertDtype", "ToDevice", "To"])
+__all__ = sorted(
+    [
+        "RandomRotate90",
+        "Compose",
+        "RandomApply",
+        "UniformNoise",
+        "Normalize",
+        "Cast",
+        "ConvertDtype",
+        "ToDevice",
+        "To",
+        "SaltAndPepperNoise",
+        "AdditiveBetaNoise",
+    ]
+)
 
 
 def get_version() -> str:

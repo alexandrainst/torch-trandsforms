@@ -1,4 +1,5 @@
 import random
+import warnings
 
 import torch
 import torchvision
@@ -68,7 +69,7 @@ class KeyedTransform(BaseTransform):
     def __init__(self, p=1.0, keys="*", **kwargs):
         super().__init__(p=p, **kwargs)
         if len(keys) == 0:  # only warns if keys is a 0-length iterable
-            RuntimeWarning(f"Keyed transform {self.__class__.__name__} expected at least one key but got 0")
+            warnings.warn(f"Keyed transform {self.__class__.__name__} expected at least one key but got 0", RuntimeWarning)
         self.keys = keys
 
     def __call__(self, **inputs):

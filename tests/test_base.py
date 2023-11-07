@@ -36,3 +36,9 @@ def test_base_classes(cl):
     if hasattr(transform, "_check_nd_compliance"):
         with pytest.raises(ValueError):
             transform._check_nd_compliance("input", input["input"])
+
+
+@pytest.mark.parametrize(("cl"), [(KeyedTransform), (KeyedNdTransform)])
+def test_len_warn(cl):
+    with pytest.warns(RuntimeWarning):
+        cl(keys=[])

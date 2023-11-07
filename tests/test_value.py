@@ -4,7 +4,7 @@ from numbers import Number
 import pytest
 import torch
 
-from torch_trandsforms.value import Normalize, UniformNoise
+from torch_trandsforms.value import AdditiveBetaNoise, Normalize, SaltAndPepperNoise, UniformNoise
 
 
 @pytest.mark.parametrize(
@@ -51,3 +51,51 @@ def test_normalize(mean, std, nd, input, expected):
 
         assert tensor.shape == result.shape
         assert torch.is_floating_point(result)
+
+
+@pytest.mark.parametrize(
+    ("prob", "low", "hi", "a", "b", "expected"),
+    [
+        (None, -1, 1, 0.5, 0.5, AssertionError),
+        (1, "None", 1, 0.5, 0.5, AssertionError),
+        (1, -1, -2, 0.5, 0.5, AssertionError),
+        (1, -1, 1, "None", 0.5, AssertionError),
+        (1, -1, 1, 0.5, -1, AssertionError),
+        (1, -1, 1, 0.5, 0.5, None),
+        (0.5, -100, 1000, 0.1, 0.9, None),
+        (100, -100, 1000, 0.9, 0.1, AssertionError),
+    ],
+)
+def test_saltandpepper(prob, low, hi, a, b, expected):
+    with pytest.raises(expected) if expected is not None else nullcontext():
+        noiser = SaltAndPepperNoise(prob=prob, low=low, hi=hi, a=a, b=b, p=1)
+        tensor = torch.zeros(4, 4, 4, 4)
+        noised = noiser(tensor=tensor)["tensor"]
+
+        assert torch.all(low <= noised)
+        assert torch.all(noised <= hi)
+        assert tensor.shape == noised.shape
+
+
+@pytest.mark.parametrize(
+    ("prob", "low", "hi", "a", "b", "expected"),
+    [
+        (None, -1, 1, 0.5, 0.5, AssertionError),
+        (1, "None", 1, 0.5, 0.5, AssertionError),
+        (1, -1, -2, 0.5, 0.5, AssertionError),
+        (1, -1, 1, "None", 0.5, AssertionError),
+        (1, -1, 1, 0.5, -1, AssertionError),
+        (1, -1, 1, 0.5, 0.5, None),
+        (0.5, -100, 1000, 0.1, 0.9, None),
+        (100, -100, 1000, 0.9, 0.1, AssertionError),
+    ],
+)
+def test_additivebetanoise(prob, low, hi, a, b, expected):
+    with pytest.raises(expected) if expected is not None else nullcontext():
+        noiser = AdditiveBetaNoise(prob=prob, low=low, hi=hi, a=a, b=b, p=1)
+        tensor = torch.zeros(4, 4, 4, 4)
+        noised = noiser(tensor=tensor)["tensor"]
+
+        assert torch.all(low <= noised)
+        assert torch.all(noised <= hi)
+        assert tensor.shape == noised.shape
