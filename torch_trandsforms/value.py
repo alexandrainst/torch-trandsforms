@@ -129,8 +129,8 @@ class SaltAndPepperNoise(KeyedNdTransform):
         prob (float): 0-1 range of indices to overwrite (1 meaning every index will be noise)
         low (float): minimum value to replace with
         hi (float): maximum value to replace with
-        a (float): alpha value for the beta distribution (likely < 1)
-        b (float): beta value for the beta distribution (likely < 1)
+        a (float or torch.Tensor): alpha value for the beta distribution (likely < 1). Can generate on any device using a=torch.tensor(a, device=device)
+        b (float or torch.Tensor): beta value for the beta distribution (likely < 1). Can generate on any device using b=torch.tensor(b, device=device)
 
     Example:
         >>> tensor = torch.arange(16).view(2,2,2,2)  # CxDxHxW
@@ -152,12 +152,12 @@ class SaltAndPepperNoise(KeyedNdTransform):
         self.low = low
         self.hi = hi
 
-        assert isinstance(a, (float, torch.FloatTensor)) and 0 < a, f"a must be a float or float tensor greater than 0"
-        assert isinstance(b, (float, torch.FloatTensor)) and 0 < b, f"b must be a float or float tensor greater than 0"
+        assert isinstance(a, (float, torch.Tensor)) and 0 < a, f"a must be a float or tensor greater than 0"
+        assert isinstance(b, (float, torch.Tensor)) and 0 < b, f"b must be a float or tensor greater than 0"
         self.dist = torch.distributions.beta.Beta(a, b)
 
     def apply(self, input, **params):
-        probs = torch.broadcast_to(torch.rand(*input.shape[-self.nd :]) < self.prob, input.shape)
+        probs = torch.broadcast_to(torch.rand(*input.shape[-self.nd :], device=self.dist.concentration1.device) < self.prob, input.shape)
         values = torch.broadcast_to((self.low - self.hi) * self.dist.sample(input.shape[-self.nd :]) + self.hi, input.shape)
         input[probs] = values[probs]
         return input
@@ -171,8 +171,8 @@ class AdditiveBetaNoise(SaltAndPepperNoise):
         prob (float): 0-1 range of indices to add (1 meaning every index will have added noise)
         low (float): minimum value to add with
         hi (float): maximum value to add with
-        a (float): alpha value for the beta distribution
-        b (float): beta value for the beta distribution
+        a (float or torch.Tensor): alpha value for the beta distribution (likely < 1). Can generate on any device using a=torch.tensor(a, device=device)
+        b (float or torch.Tensor): beta value for the beta distribution (likely < 1). Can generate on any device using b=torch.tensor(b, device=device)
 
     Example:
         >>> tensor = torch.arange(16).view(2,2,2,2)  # CxDxHxW
@@ -185,7 +185,7 @@ class AdditiveBetaNoise(SaltAndPepperNoise):
     """
 
     def apply(self, input, **params):
-        probs = torch.broadcast_to(torch.rand(*input.shape[-self.nd :]) < self.prob, input.shape)
+        probs = torch.broadcast_to(torch.rand(*input.shape[-self.nd :], device=self.dist.concentration1.device) < self.prob, input.shape)
         values = torch.broadcast_to((self.low - self.hi) * self.dist.sample(input.shape[-self.nd :]) + self.hi, input.shape)
         input[probs] += values[probs]
         return input
