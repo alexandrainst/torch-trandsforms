@@ -20,8 +20,6 @@ from torch_trandsforms.ops import Cast, ToDevice
 )
 def test_cast(dtypes, keys, expected):
     """Tests Cast and its alias ConvertDtype"""
-    if not torch.cuda.is_available() and expected is None:
-        expected = RuntimeError
     with pytest.raises(expected) if expected is not None else nullcontext():
         caster = Cast(dtype=dtypes, keys=keys)
 
@@ -59,6 +57,13 @@ def test_cast(dtypes, keys, expected):
 )
 def test_todevice(devices, keys, expected):
     """Tests ToDevice and its alias To"""
+    if not torch.cuda.is_available() and expected is None:
+        if (isinstance(devices, torch.device) and devices.type == "cuda") or (isinstance(devices, str) and devices == "cuda"):
+            expected = RuntimeError
+        elif isinstance(devices, list):
+            for dev in devices:
+                if (isinstance(dev, torch.device) and dev.type == "cuda") or (isinstance(dev, str) and dev == "cuda"):
+                    expected = RuntimeError
     with pytest.raises(expected) if expected is not None else nullcontext():
         caster = ToDevice(device=devices, keys=keys)
 
