@@ -20,6 +20,8 @@ from torch_trandsforms.ops import Cast, ToDevice
 )
 def test_cast(dtypes, keys, expected):
     """Tests Cast and its alias ConvertDtype"""
+    if not torch.cuda.is_available() and expected is None:
+        expected = RuntimeError
     with pytest.raises(expected) if expected is not None else nullcontext():
         caster = Cast(dtype=dtypes, keys=keys)
 
