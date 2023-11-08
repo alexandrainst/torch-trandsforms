@@ -1,10 +1,12 @@
-from contextlib import nullcontext
+from typing import ContextManager, Union
+
+from contextlib import AbstractContextManager, nullcontext
 from numbers import Number
 
 import pytest
 import torch
 
-from torch_trandsforms.value import AdditiveBetaNoise, Normalize, SaltAndPepperNoise, UniformNoise
+from torch_trandsforms.value import AdditiveBetaNoise, GaussianNoise, Normalize, SaltAndPepperNoise, UniformNoise
 
 
 @pytest.mark.parametrize(
@@ -99,3 +101,44 @@ def test_additivebetanoise(prob, low, hi, a, b, expected):
         assert torch.all(low <= noised)
         assert torch.all(noised <= hi)
         assert tensor.shape == noised.shape
+
+
+@pytest.mark.parametrize(
+    ("mean", "std", "nd", "expected"),
+    [
+        (0, 1, 3, type(None)),
+        ([3, 1], 1, 3, type(None)),
+        (0, [1, 2], 3, type(None)),
+        (0, torch.arange(4).view(2, 2) + 1, 2, type(None)),
+        (0, -1, 3, ValueError),
+        (None, 1, 3, TypeError),
+        (0, None, 3, TypeError),
+        (torch.arange(4).view(2, 2), torch.tensor(1), 3, RuntimeError),
+    ],
+)
+def test_gaussiannoise(mean, std, nd, expected):
+    with pytest.raises(expected) if issubclass(expected, Exception) else nullcontext():
+        tensor = torch.arange(16).view(2, 2, 2, 2)
+        noiser = GaussianNoise(mean=mean, std=std, nd=nd)
+        result = noiser(tensor=tensor)["tensor"]
+        assert tensor.shape == result.shape
+
+
+@pytest.mark.parametrize(
+    ("mean", "std", "nd", "expected"),
+    [
+        (torch.arange(4).view(2, 2), torch.arange(2) + 1, 2, UserWarning),
+        (torch.arange(4).view(2, 2), torch.tensor(1), 2, type(None)),
+        (torch.arange(4).view(2, 2), torch.arange(4).view(2, 2) + 1, 2, type(None)),
+        (0, torch.arange(4).view(2, 2) + 1, 2, type(None)),
+    ],
+)
+def test_gausswarning(mean, std, nd, expected):
+    cm: Union[pytest.WarningsRecorder, AbstractContextManager[None]] = (
+        pytest.warns(expected) if issubclass(expected, Warning) else nullcontext()
+    )
+    with cm:
+        tensor = torch.arange(16).view(2, 2, 2, 2)
+        noiser = GaussianNoise(mean=mean, std=std, nd=nd)
+        result = noiser(tensor=tensor)["tensor"]
+        assert tensor.shape == result.shape

@@ -66,6 +66,7 @@ from torch_trandsforms.base import BaseTransform
 class RandomRotate90(BaseTransform):  # note the use of BaseTransform as base class here
     """
     Rotates the input 90 degrees around a randomly determined axis
+    NOTE: This is the not actual implementation of RandomRotate90
     """
     def __init__(self, nd=3, p=0.5):
         super().__init__(p = p, nd = nd)
@@ -134,10 +135,15 @@ The roadmap is determined by the collaborative efforts of every user that provid
 
 For now, the roadmap looks something like this:
  - [x] Implement basic functionality (normalize, dtype changing, change device)
- - [ ] Implement value-level noise functionality (uniform, salt and pepper, gaussian)
+ - [x] Implement value-level noise functionality (uniform, salt and pepper, gaussian)
  - [ ] Implement structural transforms (scaling, cropping)
  - [ ] More examples, including better visuals
  - [ ] Development structure: Lock main && publish
+
+Later additions (and reasons for postponing):
+ - [ ] Arbitrary rotations (missing efficient ND computation)
+ - [ ] Gaussian Blur (missing implementation of ND convolution)
+ - [ ] Affine transformations (missing efficient ND computation)
 
 ## Contributing
 

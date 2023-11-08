@@ -2,6 +2,9 @@
 Contains value-level transformations, normally noise intended for specific keys
 """
 
+import warnings
+
+import numpy
 import torch
 
 from .base import KeyedNdTransform, KeyedTransform
@@ -166,6 +169,7 @@ class SaltAndPepperNoise(KeyedNdTransform):
 class AdditiveBetaNoise(SaltAndPepperNoise):
     """
     Adds noise sampled from a beta distribution to the input
+    Makes no attempts to correlate inputs (i.e. no shared parameters)
 
     Args:
         prob (float): 0-1 range of indices to add (1 meaning every index will have added noise)
@@ -189,3 +193,77 @@ class AdditiveBetaNoise(SaltAndPepperNoise):
         values = torch.broadcast_to((self.low - self.hi) * self.dist.sample(input.shape[-self.nd :]) + self.hi, input.shape)
         input[probs] += values[probs]
         return input
+
+
+class GaussianNoise(KeyedNdTransform):
+    """
+    Adds gaussian sampled noise to the named inputs
+    Matches the mean (or std) input to the shape of the input tensor (broadcasting),
+        so any iterable must match the size of the N+1th dimension of the input tensor (likely the channel dimension)
+    Accepts ND mean and std inputs for multi-dimension sampling (finetuned generation)
+
+    Args:
+        mean (float, list, or torch.Tensor): The mean of the gaussian distribution. Can generate on any device using mean=torch.tensor(mean, device=device)
+        std (float, list, or torch.Tensor): The standard deviation of the gaussian.
+
+    Example:
+        >>> tensor = torch.arange(16).view(2,2,2,2)  # a box where each corner has two channel values: foo and bar (C*D*H*W)
+        >>> std = 1.
+        >>> mean = torch.tensor([0.5, 0.75], device="cuda:0")
+        >>> noiser = GaussianNoise(mean=mean, std=std, nd=3)  # valid, generates values with different means per channel on GPU
+        >>>
+        >>> std = [5,1]
+        >>> noiser = GaussianNoise(mean=mean, std=std, nd=3)  # also valid, produces values with different means and stds per channel
+        >>>
+        >>> mean = [1,2,3]
+        >>> noiser = GaussianNoise(mean=mean, std=std, nd=3)  # RuntimeError, mean's C-size does not match the input tensor
+        >>>
+        >>> mean = torch.arange(4, dtype=torch.float, device="cuda:0").view(2,2)
+        >>> noiser = GaussianNoise(mean=mean, std=std, nd=2)  # technically valid, but produces results you likely did not want (mean targets C,D while std will target D)
+        >>> # traNDsforms will attempt to fix this for you with, essentially, std.view(2,1), but it will warn you
+        >>>
+        >>> std = std.view(2,1)
+        >>> noiser = GaussianNoise(mean=mean, std=std, nd=2)  # fixes the "problem" above manually
+    """
+
+    def __init__(self, mean=0.0, std=1.0, p=1, nd=3, keys="*"):
+        super().__init__(p, nd, keys)
+        mean, std = self._validate_args(mean, std)
+
+        self.mean = mean.view(*mean.shape, *[1] * nd)
+        self.std = std.view(*std.shape, *[1] * nd)
+
+    def _validate_args(self, mean, std):
+        if isinstance(mean, (list, float, int, numpy.ndarray)):
+            mean = torch.tensor(mean)
+        if isinstance(std, (list, float, int, numpy.ndarray)):
+            std = torch.tensor(std)
+
+        if not isinstance(mean, torch.Tensor) or mean.is_complex():
+            raise TypeError("Mean must be torch.tensor or convertible type with real numbers")
+        if not isinstance(std, torch.Tensor) or std.is_complex():
+            raise TypeError("Standard deviation must be torch.tensor or convertible type with real numbers")
+
+        if not torch.is_floating_point(mean):
+            mean = mean.float()
+        if not torch.is_floating_point(std):
+            std = std.float()
+
+        if torch.any(std <= 0):
+            raise ValueError("Standard deviation must be greater than 0")
+
+        if mean.ndim != std.ndim and mean.ndim > 0 and std.ndim > 0:
+            warnings.warn(f"Found differing number of dimensions between mean ({mean.ndim}) and std ({std.ndim})", UserWarning)
+            if mean.ndim < std.ndim:
+                mean = mean.view(*mean.shape, *[1] * (std.ndim - mean.ndim))
+            else:
+                std = std.view(*std.shape, *[1] * (mean.ndim - std.ndim))
+
+        if mean.device != std.device:
+            std = std.to(mean.device)
+
+        return mean, std
+
+    def apply(self, input, **params):
+        sample = torch.normal(mean=torch.broadcast_to(self.mean, input.shape), std=torch.broadcast_to(self.std, input.shape))
+        return input + sample
