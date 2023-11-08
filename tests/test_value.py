@@ -114,13 +114,16 @@ def test_additivebetanoise(prob, low, hi, a, b, expected):
         (None, 1, 3, TypeError),
         (0, None, 3, TypeError),
         (torch.arange(4).view(2, 2), torch.tensor(1), 3, RuntimeError),
-        (torch.arange(2, dtype=torch.float64, device="cuda"), torch.tensor(1.0), 3, type(None)),
+        ("special_cuda_case", torch.tensor(1.0), 3, type(None)),
     ],
 )
 def test_gaussiannoise(mean, std, nd, expected):
-    if isinstance(mean, torch.Tensor) and mean.device.type == "cuda" and not torch.cuda.is_available():
+    if mean == "special_cuda_case" and not torch.cuda.is_available():
         expected = RuntimeError
     with pytest.raises(expected) if issubclass(expected, Exception) else nullcontext():
+        if mean == "special_cuda_case":
+            mean = torch.tensor([1.0, 1.0], device="cuda", dtype=torch.float64)
+
         tensor = torch.arange(16).view(2, 2, 2, 2)
         noiser = GaussianNoise(mean=mean, std=std, nd=nd)
         tensor = tensor.to(noiser.mean.device)
