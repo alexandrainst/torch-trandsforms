@@ -6,7 +6,7 @@ from importlib import metadata as importlib_metadata
 from .ops import Cast, ConvertDtype, To, ToDevice
 from .rotation import RandomRotate90
 from .structure import Compose, RandomApply
-from .value import AdditiveBetaNoise, Normalize, SaltAndPepperNoise, UniformNoise
+from .value import AdditiveBetaNoise, GaussianNoise, Normalize, SaltAndPepperNoise, UniformNoise
 
 __all__ = sorted(
     [
@@ -21,6 +21,7 @@ __all__ = sorted(
         "To",
         "SaltAndPepperNoise",
         "AdditiveBetaNoise",
+        "GaussianNoise",
     ]
 )
 

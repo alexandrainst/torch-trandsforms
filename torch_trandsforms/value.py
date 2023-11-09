@@ -9,7 +9,7 @@ import torch
 
 from .base import KeyedNdTransform, KeyedTransform
 
-__all__ = ["Normalize", "UniformNoise"]
+__all__ = ["Normalize", "UniformNoise", "SaltAndPepperNoise", "AdditiveBetaNoise", "GaussianNoise"]
 
 
 class Normalize(KeyedNdTransform):

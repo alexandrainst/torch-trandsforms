@@ -145,6 +145,11 @@ Later additions (and reasons for postponing):
  - [ ] Gaussian Blur (missing implementation of ND convolution)
  - [ ] Affine transformations (missing efficient ND computation)
 
+Potential additions:
+ - [ ] Geometric operations using PyTorch Geometric
+ - [ ] Point clouds, meshes using PyTorch 3D
+ - [ ] Data loading, sampling, and structures
+
 ## Contributing
 
 See [Contributing](https://github.com/alexandrainst/torch-trandsforms/blob/main/CONTRIBUTING.md)
