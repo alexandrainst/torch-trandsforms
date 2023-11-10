@@ -31,7 +31,7 @@ def test_compose():
         (1, 2, 4, [1, 2, 3], False, ValueError),
         (4, 5, 3, [1, 1, 1], False, ValueError),
         (1, 3, 3, [1, 2, 1], True, None),
-        (2, 2, 4, [1, 1, 1, 1], False, None),
+        (2, 2, 4, None, False, None),
     ],
 )
 def test_random_apply(min, max, N_t, p, allow_same, expected_error):

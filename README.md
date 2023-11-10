@@ -139,6 +139,7 @@ For now, the roadmap looks something like this:
  - [ ] Implement structural transforms (scaling, cropping)
  - [ ] More examples, including better visuals
  - [ ] Development structure: Lock main && publish
+ - [ ] Mode basic functionality to _functional and _utils
 
 Later additions (and reasons for postponing):
  - [ ] Arbitrary rotations (missing efficient ND computation)
@@ -149,6 +150,7 @@ Potential additions:
  - [ ] Geometric operations using PyTorch Geometric
  - [ ] Point clouds, meshes using PyTorch 3D
  - [ ] Data loading, sampling, and structures
+ - [ ] torchscript compatibility
 
 ## Contributing
 
