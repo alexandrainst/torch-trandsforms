@@ -139,7 +139,7 @@ For now, the roadmap looks something like this:
  - [ ] Implement structural transforms (scaling, cropping)
  - [ ] More examples, including better visuals
  - [ ] Development structure: Lock main && publish
- - [ ] Mode basic functionality to _functional and _utils
+ - [ ] Move basic functionality to _functional and _utils
 
 Later additions (and reasons for postponing):
  - [ ] Arbitrary rotations (missing efficient ND computation)
