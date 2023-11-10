@@ -141,8 +141,8 @@ class SaltAndPepperNoise(KeyedNdTransform):
         >>> noiser = SaltAndPepperNoise(prob=0.1, nd=4)  # generates 4D probs, overwriting individual values
         >>>
         >>> image = torch.rand(3, 224, 224)  # image of size 224x224 (CxHxW)
-        >>> noiser = SaltAndPepperNoise(prob=0.1, nd=2)  # generates probabilities on a pixel-level (i.e. greyscale noise)
-        >>> noiser = SaltAndPepperNoise(prob=0.1, nd=3)  # generates probabilities on a color-level (i.e. R/G/B noise)
+        >>> noiser = SaltAndPepperNoise(prob=0.1, low=0.0, hi=1.0, nd=2)  # generates probabilities on a pixel-level (i.e. greyscale noise)
+        >>> noiser = SaltAndPepperNoise(prob=0.1, low=0.0, hi=1.0, nd=3)  # generates probabilities on a color-level (i.e. R/G/B noise)
     """
 
     def __init__(self, prob, low=-1, hi=1, a=0.5, b=0.5, p=0.5, nd=3, keys="*"):

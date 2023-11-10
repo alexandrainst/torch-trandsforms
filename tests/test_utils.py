@@ -25,3 +25,6 @@ from torch_trandsforms._utils import get_tensor_sequence
 def test_sequencer(x, sequence_length, acceptable_types, expected):
     with pytest.raises(expected) if expected is not None else nullcontext():
         tensor = get_tensor_sequence(x, sequence_length, acceptable_types)
+        assert len(tensor == sequence_length)
+        if acceptable_types:
+            assert tensor.dtype == acceptable_types or tensor.dtype in acceptable_types

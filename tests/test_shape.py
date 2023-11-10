@@ -44,7 +44,7 @@ def test_centercrop(shape, size, nd, padding, expected):
         ((4, 4, 4), (2, 2, 2), 2, None, ValueError),
         ((4, 4, 4, 4), torch.tensor([4, 2, 2, 2]), 4, None, (4, 2, 2, 2)),
         ((1, 1, 1), 5, 2, None, RuntimeError),
-        ((1, 1, 1), 5, 2, 0.0, (1, 5, 5)),
+        ((1,), 5, 1, 0.0, (5,)),
     ],
 )
 def test_randomcrop(shape, size, nd, padding, expected):
