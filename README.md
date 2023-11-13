@@ -109,6 +109,8 @@ class RandomRotate90(BaseTransform):  # note the use of BaseTransform as base cl
 And we can now use our class to demonstrate the library functionality:
 
 ```python
+torch.manual_seed(451)  # all randomization uses torch.random
+
 tensor = torch.arange(16).view(2,2,2,2)  # create a 4D tensor
 another_tensor = torch.arange(16).view(2,2,2,2)  # create an exactly equal tensor for demonstration
 
@@ -122,6 +124,10 @@ transformed = random_rotator(data=tensor, foo=another_tensor)  # "data" is arbit
 print(transformed['data'])
 print(transformed['foo'])
 ```
+
+## Speed
+
+Please see [TIMING.md](https://github.com/alexandrainst/torch-trandsforms/blob/main/TIMING.md) for timings. See [test_speed.py](https://github.com/alexandrainst/torch-trandsforms/blob/main/test_speed.py) for methodology.
 
 ## Support
 
