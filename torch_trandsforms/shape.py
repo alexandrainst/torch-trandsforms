@@ -79,3 +79,22 @@ class RandomCrop(Crop):
     def apply(self, input, **params):
         pos = params["pos"]
         return F.crop(input, pos, self.size, padding=self.padding)
+
+
+class RandomFlip(KeyedNdTransform):
+    """
+    Randomly flips a dimension (like Horizontal- and VerticalFlip)
+    Applies the same flip to all inputs found in keys
+    """
+
+    def __init__(self, p=0.5, nd=3, keys="*"):
+        super().__init__(p, nd, keys)
+
+    def get_parameters(self, **inputs):
+        return {"dim": torch.randint(0, self.nd, size=(1,)).item()}
+
+    def apply(self, input, **params):
+        if input.ndim < self.nd:
+            raise ValueError(f"Input dimensionality {input.ndim} must be greater than or equal to self.nd {self.nd}")
+
+        return input.flip(params["dim"])
