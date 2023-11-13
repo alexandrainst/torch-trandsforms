@@ -61,7 +61,14 @@ def test_randomcrop(shape, size, nd, padding, expected):
 
 @pytest.mark.parametrize(
     ("shape", "nd", "expected"),
-    [((4, 4, 4, 4), 3, None), ((8, 8, 8), 3, None), ((4, 4, 0), 1, None), ((4, 4), 3, ValueError), ((4, 1, 3, 1, 2, 1, 8, 9, 10), 8, None)],
+    [
+        ((4, 4, 4, 4), 3, None),
+        ((8, 8, 8), 3, None),
+        ((4, 4, 0), 1, None),
+        ((4, 4), 3, ValueError),
+        ((4, 1, 3, 1, 2, 1, 8, 9, 10), 8, None),
+        ((4,), 6, ValueError),
+    ],
 )
 def test_randomflip(shape, nd, expected):
     with pytest.raises(expected) if expected is not None else nullcontext():
