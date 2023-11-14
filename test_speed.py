@@ -64,14 +64,60 @@ def test_standard(file, cl):
     file.write(f"| {transform.__class__.__name__} | {t64_time:.4f} | {t64_cuda_time:.4f} | {t128_time:.4f} | {t128_cuda_time:.4f} |\n")
 
 
+def write_crop_head(file):
+    file.write("\n\n")
+    file.write("### Block Transforms\n\n")
+    file.write("Transforms use random padding (C=10) where applicable\n\n")
+    file.write("Input size: 10x64x64x64. Testing output sizes:\n\n")
+    file.write("| Class | 32x32x32 | 64x64x64 | 128x128x128 | 128x128x128 CUDA |\n")
+    file.write("|-------|----------|----------|-------------|------------------|\n")
+
+
+def test_block(file, cl):
+    tensor = torch.rand((10, 64, 64, 64))
+    padding = torch.rand((10,))
+
+    t32 = cl(32, padding=padding, p=1.0, nd=3)
+    t64 = cl(64, padding=padding, p=1.0, nd=3)
+    t128 = cl(128, padding=padding, p=1.0, nd=3)
+    t128_cuda = cl(128, padding=padding.to("cuda:0"), p=1.0, nd=3)
+
+    start_time = time.time()
+    t32(tensor=tensor)
+    t32_time = time.time() - start_time
+
+    start_time = time.time()
+    t64(tensor=tensor)
+    t64_time = time.time() - start_time
+
+    start_time = time.time()
+    t128(tensor=tensor)
+    t128_time = time.time() - start_time
+
+    tensor = tensor.to("cuda:0")
+
+    start_time = time.time()
+    t128_cuda(tensor=tensor)
+    t128_cuda_time = time.time() - start_time
+
+    file.write(f"| {cl.__name__} | {t32_time:.4f} | {t64_time:.4f} | {t128_time:.4f} | {t128_cuda_time:.4f} |\n")
+
+
 def main():
+    torch.manual_seed(451)
+
     classes = [RandomRotate90, UniformNoise, Normalize, SaltAndPepperNoise, AdditiveBetaNoise, GaussianNoise, RandomFlip]
+    block_classes = [CenterCrop, RandomCrop]
 
     if torch.cuda.is_available():  # only run on CUDA systems
         with open("TIMING.md", "w+") as file:
             write_file_head(file)
             for cl in classes:
                 test_standard(file, cl)
+            write_crop_head(file)
+            for cl in block_classes:
+                test_block(file, cl)
+            file.write("\n")
     else:
         raise OSError("This script should not run on systems without cuda")
 

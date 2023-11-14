@@ -64,7 +64,6 @@ def pad(x, padding, value=0.0):
 
         for idx, (l, r) in enumerate(zip(padding[::2], padding[1::2])):
             indexor = torch.ones((padded_x.shape[-idx - 1]), dtype=torch.bool)
-            print(l, r)
             if r > 0:
                 indexor[l:-r] = False
             else:
@@ -181,6 +180,13 @@ def crop(x, pos, size, padding=None):
         padded_x = x
 
     for idx, (p, s) in enumerate(zip(pos, size)):
-        padded_x = torch.index_select(padded_x, idx - c_d, torch.arange(p, p + s))
+        padded_x = torch.index_select(padded_x, idx - c_d, torch.arange(p, p + s, device=padded_x.device))
 
     return padded_x
+
+
+def rotate(input, angle, sample_mode="bilinear", padding_mode="zeros"):
+    """
+    Uses torch grid_sample to rotate spatial and volumetric data
+    Currently not implemented for >3D (TODO: Implement ND grid sampling)
+    """
