@@ -5,7 +5,7 @@ from numbers import Number
 import torch
 import torch.nn.functional as t_F
 
-from ._utils import get_tensor_sequence
+from ._utils import get_affine_matrix, get_rot_2d, get_rot_3d, get_tensor_sequence
 
 
 def pad(x, padding, value=0.0):
@@ -185,8 +185,73 @@ def crop(x, pos, size, padding=None):
     return padded_x
 
 
-def rotate(input, angle, sample_mode="bilinear", padding_mode="zeros"):
+def affine_grid_sampling(input, theta, size=None, sample_mode="bilinear", padding_mode="zeros", align_corners=None):
+    """
+    Placeholder for generating flow fields and grid sampling in one
+    TODO: align_corners automatic decision if None
+    TODO: padding_mode implement custom padding
+    TODO: allow ...-leading input dimensionality
+    TODO: theta sizing adjustment
+    TODO: size expansion and typing
+    TODO: input N + theta N alignment
+
+    Args:
+        input (torch.Tensor): The input tensor to transform
+        theta (torch.Tensor): Batch of affine matrices
+        size (torch.Size): The output size
+        sample_mode (str): See https://pytorch.org/docs/stable/generated/torch.nn.functional.grid_sample.html `mode` for information on sampling. (default: bilinear)
+        padding_mode (str): See https://pytorch.org/docs/stable/generated/torch.nn.functional.grid_sample.html `padding_mode` for information on padding. (default: zeros)
+        align_corners (bool): Whether to consider the edge pixel or its center the input's -1,1 extents. If None (default) will
+
+    Returns:
+        torch.tensor: The grid-sampled input, as determined by theta (the affine transformation matrix).
+    """
+
+    if theta.ndim < 3 or theta.shape[0] == 1:
+        theta = torch.broadcast_to(theta, (input.shape[0], *theta.shape[-2:]))
+    grid = t_F.affine_grid(theta, size or input.Size(), align_corners=align_corners)
+    return t_F.grid_sample(input, grid, mode=sample_mode, padding_mode=padding_mode, align_corners=align_corners)
+
+
+def rotate(input, angle, out_size=None, sample_mode="bilinear", padding_mode="zeros", align_corners=None):
     """
     Uses torch grid_sample to rotate spatial and volumetric data
     Currently not implemented for >3D (TODO: Implement ND grid sampling)
+
+    Args:
+        input (torch.Tensor): input tensor to rotate
+        angle (float or sequence of float): angle(s) to rotate the input in trailing order
+        out_size (Optional[sequence]): The output size. If None, uses input.size() to determine the output size
+        sample_mode (str): See https://pytorch.org/docs/stable/generated/torch.nn.functional.grid_sample.html `mode` for information on sampling. (default: bilinear)
+        padding_mode (str): See https://pytorch.org/docs/stable/generated/torch.nn.functional.grid_sample.html `padding_mode` for information on padding. (default: zeros)
+        align_corners (bool): Whether to consider the edge pixel or its center the input's -1,1 extents. If None (default) will
+
+    Returns:
+        torch.tensor: rotated input (see affine_grid_sampling for more information)
+
+    Raises:
+        NotImplementedError: If angle assumes rotation in anything but 2 or 3 dimensions (i.e. 1 or 3 inputs)
     """
+
+    if isinstance(angle, (float, int)):
+        angle = get_tensor_sequence(float(angle), 1, torch.float32)
+
+    if len(angle) > 3:
+        raise NotImplementedError(
+            "Rotation for ND>3 has not yet been implemented. Please see https://github.com/alexandrainst/torch-trandsforms/issues for related issues"
+        )
+
+    if len(angle) == 1:
+        theta = get_rot_2d(angle)
+        theta = get_affine_matrix(rotation=theta)
+    elif len(angle) == 3:
+        theta = get_rot_3d(angle)
+        theta = get_affine_matrix(rotation=theta)
+    else:
+        raise NotImplementedError(f"Rotation for len(angle) = {len(angle)} is not implemented")
+
+    print(theta)
+
+    return affine_grid_sampling(
+        input, theta, out_size or input.size(), sample_mode=sample_mode, padding_mode=padding_mode, align_corners=align_corners
+    )

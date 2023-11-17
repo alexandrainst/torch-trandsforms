@@ -148,7 +148,7 @@ For now, the roadmap looks something like this:
  - [ ] Move basic functionality to _functional and _utils
 
 Later additions (and reasons for postponing):
- - [ ] Arbitrary rotations (missing efficient ND computation)
+ - [ ] Arbitrary rotations (missing ND affine_grid and grid_sample)
  - [ ] Gaussian Blur (missing implementation of ND convolution)
  - [ ] Affine transformations (missing efficient ND computation)
 

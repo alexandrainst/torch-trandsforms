@@ -2,8 +2,11 @@
 Contains rotation transforms
 """
 
+import numpy
 import torch
 
+from ._functional import rotate
+from ._utils import get_tensor_sequence
 from .base import KeyedNdTransform
 
 __all__ = ["RandomRotate90"]
@@ -65,3 +68,67 @@ class RandomRotate90(KeyedNdTransform):  # note the use of NdTransform as base c
         """
         rot = params["rot"]
         return torch.rot90(input, dims=rot)
+
+
+class RandomRotate(KeyedNdTransform):
+    """
+    Applies a random rotation in the trailing `nd` axes
+    Currently only implemented for `nd` <= 3
+    """
+
+    def __init__(self, rotation, sample_mode="bilinear", padding_mode="zeros", align_corners=None, p=1, nd=3, keys="*"):
+        super().__init__(p, nd, keys)
+        if self.nd > 3:
+            raise NotImplementedError(f"Arbitrary rotation is only implemented for nd <= 3, got {nd}")
+        if self.nd == 1:
+            raise NotImplementedError("Arbitrary rotation in 1D is not available")
+
+        # attempt to extract -rot,+rot from rotation according to input type
+        # raise TypeError or ValueError depending on typing and input values
+        if isinstance(rotation, (float, int)):
+            self.rotation = [get_tensor_sequence(float(rotation), 2, torch.float)]
+        elif isinstance(rotation, (torch.Tensor, numpy.ndarray)):
+            if isinstance(rotation, numpy.ndarray):
+                rotation = torch.from_numpy(rotation)
+            if rotation.ndim == 0:
+                self.rotation = [get_tensor_sequence(rotation.float(), 2, torch.float)]
+            else:
+                self.rotation = [get_tensor_sequence(rot.float(), 2, torch.float) for rot in rotation]
+        elif isinstance(rotation, (tuple, list)):
+            self.rotation = [get_tensor_sequence(float(rot), 2, torch.float) for rot in rotation]
+        else:
+            raise TypeError(f"Did not understand typing of rotation, got {type(rotation)}")
+
+        if len(self.rotation) != 3 and len(self.rotation) != 1:
+            raise ValueError(f"Expected rotation to have 1 or 3 len, got {len(self.rotation)}")
+
+        if self.nd == 2 and not len(self.rotation) == 1:
+            raise ValueError(f"Expected 1 rotational axis for nd = 2, got {len(self.rotation)}")
+        elif self.nd == 3 and not len(self.rotation) == 3:
+            raise ValueError(f"Expected 3 rotational axis for nd = 3, got {len(self.rotation)}")
+
+        # set min rot to -rot
+        for idx in range(len(self.rotation)):
+            self.rotation[idx][0] = -self.rotation[idx][1]
+
+        # set parameters for rotation
+        self.sample_mode = sample_mode
+        self.padding_mode = padding_mode
+        self.align_corners = align_corners
+
+    def get_parameters(self, **inputs):
+        """
+        Generate a random rotation in the uniform distribution -rot,rot for rot in each rotation dimension
+        """
+        rotation = [(rot[0] - rot[1]) * torch.rand((1,)).item() + rot[1] for rot in self.rotation]
+        return {"rot": rotation}
+
+    def apply(self, input, **params):
+        return rotate(
+            input,
+            params["rot"],
+            input.size(),
+            sample_mode=self.sample_mode,
+            padding_mode=self.padding_mode,
+            align_corners=self.align_corners,
+        )

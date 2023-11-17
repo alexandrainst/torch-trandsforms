@@ -43,3 +43,85 @@ def get_tensor_sequence(x, sequence_length, acceptable_types=None):
     elif x.shape[0] != sequence_length:
         raise ValueError(f"Expected sequence of length {sequence_length}, 0, or 1. Got length {x.shape[0]}")
     return x
+
+
+def angle2radians(angle):
+    if isinstance(angle, torch.Tensor):
+        return angle * (torch.pi / 180.0)
+    return torch.tensor(angle * (torch.pi / 180.0))
+
+
+def get_rot_2d(angle):
+    """
+    Get the 2D rotation matrix for affine_grid
+
+    Args:
+        angle (float): angle in degrees
+
+    Returns:
+        torch.tensor: 2x2 rotation matrix
+
+    Raises:
+        ValueError: If given a sequence of list or tuple (non-array-like) with length != 1
+    """
+    if isinstance(angle, (list, tuple)):
+        if not len(angle) == 1:
+            raise ValueError(f"Length of angle should be 1 (or 0, i.e. scalar)")
+        angle = angle[0]
+
+    a = angle2radians(angle)
+    R = torch.tensor([[torch.cos(a), -torch.sin(a)], [torch.sin(a), torch.cos(a)]])
+    return R
+
+
+def get_rot_3d(angles):
+    """
+    Get the combined 3D rotation matrix for affine_grid
+
+    Args:
+        angles (sequence of float): angles in degrees (D,H,W order)
+
+    Returns:
+        torch.tensor: 3x3 rotation matrix
+    """
+    alpha, beta, gamma = (angle2radians(angle) for angle in angles)
+    roll = torch.tensor([[1.0, 0.0, 0.0], [0.0, torch.cos(gamma), -torch.sin(gamma)], [0.0, torch.sin(gamma), torch.cos(gamma)]])
+
+    yaw = torch.tensor([[torch.cos(alpha), -torch.sin(alpha), 0.0], [torch.sin(alpha), torch.cos(alpha), 0.0], [0.0, 0.0, 1.0]])
+
+    pitch = torch.tensor([[torch.cos(beta), 0.0, torch.sin(beta)], [0.0, 1.0, 0.0], [-torch.sin(beta), 0.0, torch.cos(beta)]])
+
+    R = roll @ yaw @ pitch
+    return R
+
+
+def get_affine_matrix(rotation=None, translation=None, nd=None):
+    """
+    Creates an affine rotation and translation matrix. If nd and inputs are None, returns an Identity matrix
+
+    Args:
+        rotation (Optional[torch.tensor]): Tensor representation of rotation (N*N)
+        translation (Optional[torch.tensor]): Tensor representation of translation (N*1)
+        nd (Optional[int]): If nd is given and other inputs are None, creates identity versions of those inputs
+
+    Returns:
+        torch.tensor: Affine transformation matrix of size N*(N+1)
+
+    Raises:
+        ValueError: one of nd or rotation must not be None
+    """
+    if nd is None:
+        if rotation is not None:
+            nd = rotation.shape[-1]
+        elif translation is not None:
+            nd = translation.shape[0]
+        else:
+            raise ValueError("One of nd or rotation must be non-None")
+
+    if rotation is None:
+        rotation = torch.eye(nd)
+
+    if translation is None:
+        translation = torch.zeros(rotation.shape[-2]).view(-1, 1)
+
+    return torch.cat([rotation, translation], dim=-1)

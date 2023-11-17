@@ -14,7 +14,7 @@ def write_file_head(file):
 
     file.write("## traNDsforms timing\n\n")
     file.write("### System Info\n\n")
-    file.write(f"**CPU**: {cpu} | **GPU**: {gpu}\n\n")
+    file.write(f"**CPU**: {cpu}\n\n**GPU**: {gpu}\n\n")
     file.write("### Basic Transforms\n\n")
     file.write("| Class | 10x64x64x64 | 10x64x64x64 CUDA | 10x128x128x128 | 10x128x128x128 CUDA |\n")
     file.write("|-------|-------------|------------------|----------------|---------------------|\n")

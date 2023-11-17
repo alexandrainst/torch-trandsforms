@@ -1,10 +1,11 @@
 from contextlib import nullcontext
+from math import prod
 
 import numpy
 import pytest
 import torch
 
-from torch_trandsforms._functional import crop, pad
+from torch_trandsforms._functional import crop, pad, rotate
 
 
 @pytest.mark.parametrize(
@@ -52,3 +53,23 @@ def test_crop(pos, size, pad, expected):
         tensor = torch.zeros((4, 4, 4))
         cropped = crop(tensor, pos, size, pad)
         assert cropped.shape == expected
+
+
+@pytest.mark.parametrize(
+    ("input_shape", "angle", "out_size", "sample_mode", "padding_mode", "align_corners", "expected"),
+    [
+        ((1, 3, 4, 4), 90, None, "nearest", "zeros", True, None),
+        ((10, 10, 24, 24, 24), [45, 0, 42], (10, 10, 12, 12, 12), "bilinear", "reflection", False, None),
+        ((4, 5, 6), 7, (4, 5, 6), "nearest", "zeros", False, NotImplementedError),
+        ((1, 4, 5, 6), 7, None, "nearest", "zeros", False, None),
+        ((1, 3, 24, 24, 24, 24), [6, 7, 8, 9, 10, 11], None, "nearest", "zeros", True, NotImplementedError),
+        ((1, 3, 24, 24, 24), [10, 20], None, "nearest", "zeros", True, NotImplementedError),
+    ],
+)
+def test_rotate(input_shape, angle, out_size, sample_mode, padding_mode, align_corners, expected):
+    with pytest.raises(expected) if expected is not None else nullcontext():
+        tensor = torch.arange(prod(input_shape), dtype=torch.float).view(*input_shape)
+        if out_size is None:
+            out_size = input_shape
+        result = rotate(tensor, angle, out_size, sample_mode, padding_mode, align_corners)
+        assert result.shape == out_size
