@@ -23,7 +23,7 @@ torch traNDsforms is in early alpha and may have bugs and a significant lack of 
 
 torch traNDsforms is an easy to use transform library for N-dimensional PyTorch data
 
- - Compatible with nearly any `torch.Tensor`
+ - Differentiable, accelerated ND transformations with most tensors
  - One transform pipeline for all your data using `KeyedTransforms`
  - Customizable and lightweight
  - No superfluous dependencies

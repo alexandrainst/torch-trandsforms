@@ -209,7 +209,7 @@ def affine_grid_sampling(input, theta, size=None, sample_mode="bilinear", paddin
 
     if theta.ndim < 3 or theta.shape[0] == 1:
         theta = torch.broadcast_to(theta, (input.shape[0], *theta.shape[-2:]))
-    grid = t_F.affine_grid(theta, size or input.Size(), align_corners=align_corners)
+    grid = t_F.affine_grid(theta, size or input.Size(), align_corners=align_corners).to(input.device)
     return t_F.grid_sample(input, grid, mode=sample_mode, padding_mode=padding_mode, align_corners=align_corners)
 
 
@@ -249,8 +249,6 @@ def rotate(input, angle, out_size=None, sample_mode="bilinear", padding_mode="ze
         theta = get_affine_matrix(rotation=theta)
     else:
         raise NotImplementedError(f"Rotation for len(angle) = {len(angle)} is not implemented")
-
-    print(theta)
 
     return affine_grid_sampling(
         input, theta, out_size or input.size(), sample_mode=sample_mode, padding_mode=padding_mode, align_corners=align_corners

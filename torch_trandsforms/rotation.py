@@ -76,7 +76,7 @@ class RandomRotate(KeyedNdTransform):
     Currently only implemented for `nd` <= 3
     """
 
-    def __init__(self, rotation, sample_mode="bilinear", padding_mode="zeros", align_corners=None, p=1, nd=3, keys="*"):
+    def __init__(self, rotation, sample_mode="bilinear", padding_mode="zeros", align_corners=None, p=0.5, nd=3, keys="*"):
         super().__init__(p, nd, keys)
         if self.nd > 3:
             raise NotImplementedError(f"Arbitrary rotation is only implemented for nd <= 3, got {nd}")
@@ -124,6 +124,10 @@ class RandomRotate(KeyedNdTransform):
         return {"rot": rotation}
 
     def apply(self, input, **params):
+        # check that input dimensionality is appropriate for grid_sample or make it so
+        if input.ndim < self.nd + 2:
+            input = input.view(*[1] * (self.nd + 2 - input.ndim), *input.shape)
+
         return rotate(
             input,
             params["rot"],
@@ -131,4 +135,4 @@ class RandomRotate(KeyedNdTransform):
             sample_mode=self.sample_mode,
             padding_mode=self.padding_mode,
             align_corners=self.align_corners,
-        )
+        ).view(*input.shape)

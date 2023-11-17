@@ -3,7 +3,7 @@ import time
 
 import torch
 
-from torch_trandsforms.rotation import RandomRotate90
+from torch_trandsforms.rotation import RandomRotate, RandomRotate90
 from torch_trandsforms.shape import CenterCrop, RandomCrop, RandomFlip
 from torch_trandsforms.value import AdditiveBetaNoise, GaussianNoise, Normalize, SaltAndPepperNoise, UniformNoise
 
@@ -29,6 +29,8 @@ def test_standard(file, cl):
         transform = cl(0.0, 1.0, p=1.0, nd=3)
     elif cl == SaltAndPepperNoise or cl == AdditiveBetaNoise:
         transform = cl(0.1, p=1.0)
+    elif cl == RandomRotate:
+        transform = cl([180.0, 180.0, 180.0], sample_mode="bilinear", padding_mode="zeros", align_corners=True, p=1.0)
     else:
         transform = cl(p=1.0)
 
@@ -50,6 +52,8 @@ def test_standard(file, cl):
         transform = cl(0.1, a=torch.tensor(0.5, device="cuda:0"), b=torch.tensor(0.5, device="cuda:0"), p=1.0)
     elif cl == GaussianNoise:
         transform = cl(torch.tensor(0.01, device="cuda:0"), p=1.0)
+    elif cl == RandomRotate:
+        transform = cl([180.0, 180.0, 180.0], sample_mode="bilinear", padding_mode="zeros", align_corners=True, p=1.0)
     else:
         transform = cl(p=1.0)
 
@@ -106,7 +110,7 @@ def test_block(file, cl):
 def main():
     torch.manual_seed(451)
 
-    classes = [RandomRotate90, UniformNoise, Normalize, SaltAndPepperNoise, AdditiveBetaNoise, GaussianNoise, RandomFlip]
+    classes = [RandomRotate90, UniformNoise, Normalize, SaltAndPepperNoise, AdditiveBetaNoise, GaussianNoise, RandomFlip, RandomRotate]
     block_classes = [CenterCrop, RandomCrop]
 
     if torch.cuda.is_available():  # only run on CUDA systems
@@ -117,7 +121,6 @@ def main():
             write_crop_head(file)
             for cl in block_classes:
                 test_block(file, cl)
-            file.write("\n")
     else:
         raise OSError("This script should not run on systems without cuda")
 
