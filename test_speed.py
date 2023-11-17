@@ -4,7 +4,7 @@ import time
 import torch
 
 from torch_trandsforms.rotation import RandomRotate, RandomRotate90
-from torch_trandsforms.shape import CenterCrop, RandomCrop, RandomFlip
+from torch_trandsforms.shape import CenterCrop, RandomCrop, RandomFlip, RandomResize, Resize
 from torch_trandsforms.value import AdditiveBetaNoise, GaussianNoise, Normalize, SaltAndPepperNoise, UniformNoise
 
 
@@ -81,10 +81,21 @@ def test_block(file, cl):
     tensor = torch.rand((10, 64, 64, 64))
     padding = torch.rand((10,))
 
-    t32 = cl(32, padding=padding, p=1.0, nd=3)
-    t64 = cl(64, padding=padding, p=1.0, nd=3)
-    t128 = cl(128, padding=padding, p=1.0, nd=3)
-    t128_cuda = cl(128, padding=padding.to("cuda:0"), p=1.0, nd=3)
+    if cl == Resize:
+        t32 = cl(size=[32] * 3, p=1.0, nd=3)
+        t64 = cl(size=[64] * 3, p=1.0, nd=3)
+        t128 = cl(size=[128] * 3, p=1.0, nd=3)
+        t128_cuda = cl(size=[128] * 3, p=1.0, nd=3)
+    elif cl == RandomResize:
+        t32 = cl(size=[(32, 32)] * 3, p=1.0, nd=3)
+        t64 = cl(size=[(64, 64)] * 3, p=1.0, nd=3)
+        t128 = cl(size=[(128, 128)] * 3, p=1.0, nd=3)
+        t128_cuda = cl(size=[(128, 128)] * 3, p=1.0, nd=3)
+    else:
+        t32 = cl(32, padding=padding, p=1.0, nd=3)
+        t64 = cl(64, padding=padding, p=1.0, nd=3)
+        t128 = cl(128, padding=padding, p=1.0, nd=3)
+        t128_cuda = cl(128, padding=padding.to("cuda:0"), p=1.0, nd=3)
 
     start_time = time.time()
     t32(tensor=tensor)
@@ -111,7 +122,7 @@ def main():
     torch.manual_seed(451)
 
     classes = [RandomRotate90, UniformNoise, Normalize, SaltAndPepperNoise, AdditiveBetaNoise, GaussianNoise, RandomFlip, RandomRotate]
-    block_classes = [CenterCrop, RandomCrop]
+    block_classes = [CenterCrop, RandomCrop, Resize, RandomResize]
 
     if torch.cuda.is_available():  # only run on CUDA systems
         with open("TIMING.md", "w+") as file:

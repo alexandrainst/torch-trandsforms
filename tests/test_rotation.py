@@ -36,6 +36,7 @@ def test_rotate90(nd, expected):
     ("input_shape", "nd", "rotation", "keys", "expected"),
     [
         ((1, 3, 6, 6), 2, 45, ["foo", "bar"], None),
+        ((3, 6, 6), 2, 45, ["foo", "bar"], None),
         ((1, 3, 6, 6, 6), 3, [45, 45, 45], ["foo", "bar"], None),
         (None, 4, None, ["foo", "bar"], NotImplementedError),
         (None, 1, None, ["foo", "bar"], NotImplementedError),

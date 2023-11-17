@@ -124,6 +124,7 @@ class RandomRotate(KeyedNdTransform):
         return {"rot": rotation}
 
     def apply(self, input, **params):
+        osh = input.shape
         # check that input dimensionality is appropriate for grid_sample or make it so
         if input.ndim < self.nd + 2:
             input = input.view(*[1] * (self.nd + 2 - input.ndim), *input.shape)
@@ -135,4 +136,4 @@ class RandomRotate(KeyedNdTransform):
             sample_mode=self.sample_mode,
             padding_mode=self.padding_mode,
             align_corners=self.align_corners,
-        ).view(*input.shape)
+        ).view(*osh)

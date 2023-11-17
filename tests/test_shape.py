@@ -5,7 +5,7 @@ import numpy
 import pytest
 import torch
 
-from torch_trandsforms.shape import CenterCrop, Crop, RandomCrop, RandomFlip
+from torch_trandsforms.shape import CenterCrop, Crop, RandomCrop, RandomFlip, RandomResize, Resize
 
 
 def test_crop():
@@ -78,3 +78,71 @@ def test_randomflip(shape, nd, expected):
         result = flipper(t=tensor_1, p=tensor_2)
         assert result["t"].shape == result["p"].shape
         assert torch.all(result["t"] == result["p"])
+
+
+@pytest.mark.parametrize(
+    ("size", "scale_factor", "nd", "expected"),
+    [
+        (None, None, 3, ValueError),
+        (10, None, 3, None),
+        (None, 1.5, 3, None),
+        (10, 1.5, 3, ValueError),
+        (10, None, 4, NotImplementedError),
+    ],
+)
+def test_scale(size, scale_factor, nd, expected):
+    with pytest.raises(expected) if expected is not None else nullcontext():
+        tensor = torch.arange(3 * 8 * 8 * 8).view(3, 8, 8, 8).float()
+        scaler = Resize(scale_factor=scale_factor, size=size, nd=nd, p=1.0)
+        result = scaler(tensor=tensor)["tensor"]
+        assert result.ndim == tensor.ndim
+        if size:
+            assert torch.all(torch.isclose(torch.tensor(result.shape[-nd:], dtype=torch.float), torch.tensor(size, dtype=torch.float)))
+        elif scale_factor:
+            size = scale_factor * torch.tensor(tensor.shape[-nd:])
+            size = size.int()
+            assert torch.all(torch.isclose(torch.tensor(result.shape[-nd:], dtype=torch.float), size.float()))
+
+
+@pytest.mark.parametrize(
+    ("size", "scale_factor", "nd", "expected"),
+    [
+        (None, None, 3, ValueError),
+        (10, None, 3, TypeError),
+        (None, 0.5, 3, None),
+        (10, 0.5, 3, ValueError),
+        (10, None, 4, NotImplementedError),
+        (torch.tensor([6, 10]), None, 3, None),
+        (None, numpy.array((0.8, 1.2)), 3, None),
+        ([(3, 4), (5, 6), (7, 8), (9, 1)], None, 3, ValueError),
+        (None, [(3, 4), (5, 6), (7, 8), (9, 1)], 3, ValueError),
+        (([6, 8], [4, 8], [10, 12]), None, 3, None),
+        (None, [torch.tensor(0.2), 0.4, (1, 2)], 3, None),
+        (None, "this will fail", 3, TypeError),
+        ("special_case", None, 3, RuntimeError),
+    ],
+)
+def test_randomscale(size, scale_factor, nd, expected):
+    with pytest.raises(expected) if expected is not None else nullcontext():
+        tensor = torch.arange(3 * 8 * 8 * 8).view(3, 8, 8, 8).float()
+
+        if size == "special_case":
+            scaler = RandomResize(scale_factor=0.2, size=None, nd=nd, p=1.0)
+            scaler.scale_factor = None
+            scaler.size = None
+            scaler(tensor=tensor)
+
+        scaler = RandomResize(scale_factor=scale_factor, size=size, nd=nd, p=1.0)
+        result = scaler(tensor=tensor)["tensor"]
+        assert result.ndim == tensor.ndim
+        re_size = torch.tensor(result.shape)
+        if size is not None:
+            t_size_min = torch.tensor(scaler.size)[:, 0]
+            t_size_max = torch.tensor(scaler.size)[:, 1]
+            assert torch.all(re_size[-nd:] >= t_size_min)
+            assert torch.all(re_size[-nd:] <= t_size_max)
+        elif scale_factor is not None:
+            t_size_min = (torch.tensor(scaler.scale_factor)[:, 0] * torch.tensor([8.0, 8.0, 8.0])).floor()
+            t_size_max = (torch.tensor(scaler.scale_factor)[:, 1] * torch.tensor([8.0, 8.0, 8.0])).floor()
+            assert torch.all(re_size[-nd:] >= t_size_min)
+            assert torch.all(re_size[-nd:] <= t_size_max)

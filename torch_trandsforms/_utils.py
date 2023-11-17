@@ -8,6 +8,46 @@ import numpy
 import torch
 
 
+def extract_min_max(input, base=0.0, allow_value=True):
+    """
+    Utility function to extract a minimum and maximum randomization range from a value or a range
+
+    Args:
+        input (value or sequence): a number or sequence of 2 numbers to construct the range from
+        base (float): Base number to subtract from and add to (commonly 0 (e.g. rotations) or 1 (e.g. scaling))
+        allow_value (bool): If False, throws an error when encountering a scalar (for example, if a base value cannot be reasoned (e.g. for static sizes))
+
+    Returns:
+        tuple (float, float): Min and max values
+
+    Raises:
+        ValueError: If the input type is accepted, but the input is wrong (list too long or short? input dimensionality > 1?)
+        TypeError: The input type was not accepted (allow_value = False? tried to input None?)
+        AssertionError: if min > max
+    """
+    if isinstance(input, (int, float)):
+        if not allow_value:
+            raise TypeError(f"allow_value is False - please provide both a min and max value (got {input})")
+        return (base - input, base + input)
+    elif isinstance(input, (tuple, list)):
+        if len(input) != 2:
+            raise ValueError(f"Expected len 2, got {len(input)}")
+        assert input[0] <= input[1], f"Expected input[0] to be less than input[1], got {input[0]} and {input[1]}"
+        return tuple(input)
+    elif isinstance(input, (numpy.ndarray, torch.Tensor)):
+        if input.ndim == 0:
+            if not allow_value:
+                raise TypeError(f"allow_value is False - please provide both a min and max value (got {input})")
+            return (base - input.item(), base + input.item())
+        elif input.ndim == 1:
+            if input.shape[0] != 2:
+                raise ValueError(f"Expected len 2, got {input.shape[0]}")
+        else:
+            raise ValueError(f"Expected input to be 1D, got {input.ndim}")
+        return tuple(input.tolist())
+    raise TypeError(f"Expected int, flot, tuple, list, numpy.ndarray, or torch.Tensor, got {type(input)}")
+
+
 def get_tensor_sequence(x, sequence_length, acceptable_types=None):
     """
     Extract a tensor sequence of specified length and typing from input
