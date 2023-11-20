@@ -144,7 +144,7 @@ For now, the roadmap looks something like this:
  - [x] Implement value-level noise functionality (uniform, salt and pepper, gaussian)
  - [x] Implement structural transforms (cropping, flipping)
  - [x] Implement placeholder transforms for not-yet-ND-capable transforms (arbitrary rotation, scaling)
- - [ ] More examples, including better visuals
+ - [x] More examples, including better visuals
  - [ ] Development structure: Lock main && publish
  - [ ] Move basic functionality to _functional and _utils
 
