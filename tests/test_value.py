@@ -70,7 +70,7 @@ def test_normalize(mean, std, nd, input, expected):
 )
 def test_saltandpepper(prob, low, hi, a, b, expected):
     with pytest.raises(expected) if expected is not None else nullcontext():
-        noiser = SaltAndPepperNoise(prob=prob, low=low, hi=hi, a=a, b=b, p=1)
+        noiser = SaltAndPepperNoise(prob=prob, low=low, hi=hi, a=a, b=b, p=1, copy_input=True)
         tensor = torch.zeros(4, 4, 4, 4)
         noised = noiser(tensor=tensor)["tensor"]
 
@@ -94,7 +94,7 @@ def test_saltandpepper(prob, low, hi, a, b, expected):
 )
 def test_additivebetanoise(prob, low, hi, a, b, expected):
     with pytest.raises(expected) if expected is not None else nullcontext():
-        noiser = AdditiveBetaNoise(prob=prob, low=low, hi=hi, a=a, b=b, p=1)
+        noiser = AdditiveBetaNoise(prob=prob, low=low, hi=hi, a=a, b=b, p=1, copy_input=True)
         tensor = torch.zeros(4, 4, 4, 4)
         noised = noiser(tensor=tensor)["tensor"]
 

@@ -81,9 +81,7 @@ class Normalize(KeyedNdTransform):
         mean = torch.broadcast_to(self.mean, input.shape)
         std = torch.broadcast_to(self.std, input.shape)
 
-        input = (input - mean) / std
-
-        return input
+        return (input - mean) / std
 
 
 class UniformNoise(KeyedTransform):
@@ -119,6 +117,7 @@ class UniformNoise(KeyedTransform):
         """
         dtype = input.dtype if torch.is_floating_point(input) else torch.float
         noise = (self.low - self.hi) * torch.rand_like(input, device=input.device, dtype=dtype) + self.hi
+
         return input + noise
 
 
@@ -134,6 +133,7 @@ class SaltAndPepperNoise(KeyedNdTransform):
         hi (float): maximum value to replace with
         a (float or torch.Tensor): alpha value for the beta distribution (likely < 1). Can generate on any device using a=torch.tensor(a, device=device)
         b (float or torch.Tensor): beta value for the beta distribution (likely < 1). Can generate on any device using b=torch.tensor(b, device=device)
+        copy_input (bool): Whether to make a copy of the input before applying noise (useful for visualization purposes and to keep an original for posterity)
 
     Example:
         >>> tensor = torch.arange(16).view(2,2,2,2)  # CxDxHxW
@@ -145,7 +145,7 @@ class SaltAndPepperNoise(KeyedNdTransform):
         >>> noiser = SaltAndPepperNoise(prob=0.1, low=0.0, hi=1.0, nd=3)  # generates probabilities on a color-level (i.e. R/G/B noise)
     """
 
-    def __init__(self, prob, low=-1, hi=1, a=0.5, b=0.5, p=0.5, nd=3, keys="*"):
+    def __init__(self, prob, low=-1, hi=1, a=0.5, b=0.5, p=0.5, nd=3, keys="*", copy_input=False):
         super().__init__(p, nd, keys)
         assert isinstance(prob, (int, float)) and 0.0 <= prob <= 1.0, f"prob must be a number between 0 and 1 (got {prob})"
         self.prob = prob
@@ -159,9 +159,13 @@ class SaltAndPepperNoise(KeyedNdTransform):
         assert isinstance(b, (float, torch.Tensor)) and 0 < b, f"b must be a float or tensor greater than 0"
         self.dist = torch.distributions.beta.Beta(a, b)
 
+        self.copy_input = copy_input
+
     def apply(self, input, **params):
         probs = torch.broadcast_to(torch.rand(*input.shape[-self.nd :], device=self.dist.concentration1.device) < self.prob, input.shape)
         values = torch.broadcast_to((self.low - self.hi) * self.dist.sample(input.shape[-self.nd :]) + self.hi, input.shape)
+        if self.copy_input:
+            input = input.clone()
         input[probs] = values[probs]
         return input
 
@@ -177,6 +181,7 @@ class AdditiveBetaNoise(SaltAndPepperNoise):
         hi (float): maximum value to add with
         a (float or torch.Tensor): alpha value for the beta distribution (likely < 1). Can generate on any device using a=torch.tensor(a, device=device)
         b (float or torch.Tensor): beta value for the beta distribution (likely < 1). Can generate on any device using b=torch.tensor(b, device=device)
+        copy_input (bool): Whether to make a copy of the input before applying noise (useful for visualization purposes and to keep an original for posterity)
 
     Example:
         >>> tensor = torch.arange(16).view(2,2,2,2)  # CxDxHxW
@@ -191,6 +196,8 @@ class AdditiveBetaNoise(SaltAndPepperNoise):
     def apply(self, input, **params):
         probs = torch.broadcast_to(torch.rand(*input.shape[-self.nd :], device=self.dist.concentration1.device) < self.prob, input.shape)
         values = torch.broadcast_to((self.low - self.hi) * self.dist.sample(input.shape[-self.nd :]) + self.hi, input.shape)
+        if self.copy_input:
+            input = input.clone()
         input[probs] += values[probs]
         return input
 
