@@ -109,7 +109,7 @@ class RandomRotate90(BaseTransform):  # note the use of BaseTransform as base cl
 And we can now use our class to demonstrate the library functionality:
 
 ```python
-torch.manual_seed(451)  # all randomization uses torch.random
+torch.manual_seed(451)  # all randomization uses torch.random in the actual implementation
 
 tensor = torch.arange(16).view(2,2,2,2)  # create a 4D tensor
 another_tensor = torch.arange(16).view(2,2,2,2)  # create an exactly equal tensor for demonstration
