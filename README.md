@@ -135,7 +135,7 @@ For now, the roadmap looks something like this:
  - [x] Implement structural transforms (cropping, flipping)
  - [x] Implement placeholder transforms for not-yet-ND-capable transforms (arbitrary rotation, scaling)
  - [x] More examples, including better visuals
- - [ ] Development structure: Lock main && publish
+ - [x] Development structure: Lock main && publish
  - [ ] Move basic functionality to _functional and _utils
 
 Later additions (and reasons for postponing):
