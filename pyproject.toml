@@ -5,7 +5,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "torch-trandsforms"
-version = "0.3.0"
+version = "0.3.2"
 description = "A pytorch-first transform library for ND data, such as multi-channel 3D volumes"
 readme = "README.md"
 authors = ["Oliver Hjermitslev <oliver.gyldenberg@alexandra.dk>"]
@@ -27,13 +27,14 @@ classifiers = [  #! Update me
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
 ]
 
 
 
 [tool.poetry.dependencies]
 python = "^3.8"
-torch = ">= 1.13.1 < 2.0.1"
+torch = ">= 1.13.1"
 torchvision = ">= 0.14.0"
 
 [tool.poetry.dev-dependencies]
