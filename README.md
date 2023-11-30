@@ -15,8 +15,6 @@
 
 A pytorch-first transform library for ND data, such as multi-channel 3D volumes
 
-torch traNDsforms is in early alpha and may have bugs and a significant lack of usefulness :)
-
 </div>
 
 ## Features
@@ -31,14 +29,6 @@ torch traNDsforms is an easy to use transform library for N-dimensional PyTorch 
 
 ## Installation
 
-In early alpha, install torch traNDsforms like this:
-
-```bash
-pip install git+ssh://git@github.com/alexandrainst/torch-trandsforms.git/
-```
-
-Soon enough, you will be able to run the following:
-
 ```bash
 pip install torch_trandsforms
 ```
@@ -49,7 +39,7 @@ or
 poetry add torch-trandsforms
 ```
 
-or
+or potentially
 
 ```bash
 conda install torch_trandsforms
