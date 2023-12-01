@@ -98,9 +98,6 @@ class RandomFlip(KeyedNdTransform):
         return {"dim": torch.randint(0, self.nd, size=(1,)).item()}
 
     def apply(self, input, **params):
-        if input.ndim < self.nd:
-            raise ValueError(f"Input dimensionality {input.ndim} must be greater than or equal to self.nd {self.nd}")
-
         return input.flip(params["dim"])
 
 

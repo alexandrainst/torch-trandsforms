@@ -99,12 +99,12 @@ class RandomApply:
 
         for n in range(int(N)):
             maxsum = sum(probs)
-            cumsum = [sum(probs[:i]) - probs[0] for i in range(1, len(probs))]
+            cumsum = [sum(probs[: i + 1]) for i in range(len(probs))]
 
             p = maxsum * torch.rand((1,)).item()
 
-            for i in range(1, len(cumsum)):  # find where the random value slots in
-                if p >= cumsum[i]:
+            for i in range(len(cumsum)):  # find where the random value slots in
+                if p <= cumsum[i]:
                     inputs = transforms[i](**inputs)
 
                     if not self.allow_same:
