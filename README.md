@@ -115,6 +115,8 @@ print(transformed['data'])
 print(transformed['foo'])
 ```
 
+For more examples of use, see [EXAMPLES.md](https://github.com/alexandrainst/torch-trandsforms/blob/main/examples/EXAMPLES.md)
+
 ## Speed
 
 Please see [TIMING.md](https://github.com/alexandrainst/torch-trandsforms/blob/main/TIMING.md) for timings. See [test_speed.py](https://github.com/alexandrainst/torch-trandsforms/blob/main/test_speed.py) for methodology.
