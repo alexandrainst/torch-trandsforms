@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![Build status](https://github.com/alexandrainst/torch-trandsforms/workflows/build/badge.svg?branch=main&event=push)](https://github.com/alexandrainst/torch-trandsforms/actions?query=workflow%3Abuild)
+[![build](https://github.com/alexandrainst/torch-trandsforms/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/alexandrainst/torch-trandsforms/actions/workflows/build.yml?query=branch%3Amain)
 [![Python Version](https://img.shields.io/pypi/pyversions/torch-trandsforms.svg)](https://pypi.org/project/torch-trandsforms/)
 [![Dependencies Status](https://img.shields.io/badge/dependencies-up%20to%20date-brightgreen.svg)](https://github.com/alexandrainst/torch-trandsforms/pulls?utf8=%E2%9C%93&q=is%3Apr%20author%3Aapp%2Fdependabot)
 
