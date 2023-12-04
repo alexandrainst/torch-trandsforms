@@ -151,9 +151,14 @@ class SaltAndPepperNoise(KeyedNdTransform):
         self.prob = prob
 
         assert isinstance(low, (int, float, torch.Tensor)), f"low must be a number (got {type(low)})"
-        assert (isinstance(hi, (int, float)) and low < hi) or (
-            isinstance(hi, torch.Tensor) and torch.all(low < hi)
-        ), f"hi must be a number greater than low"
+        assert isinstance(hi, (int, float, torch.Tensor)), f"hi must be a number or tensor (got {type(hi)})"
+
+        if isinstance(hi, (int, float)) and isinstance(low, (int, float)):
+            assert low < hi, f"hi ({hi}) must be a number greater than low ({low})"
+        else:
+            diff = low < hi
+            assert isinstance(diff, torch.Tensor), f"this should never run - mypy check"
+            assert torch.all(diff), f"hi ({hi}) must be a number greater than low ({low})"
 
         if isinstance(low, torch.Tensor) and low.ndim > 0:
             low = low.view(*low.shape, *[1] * self.nd)

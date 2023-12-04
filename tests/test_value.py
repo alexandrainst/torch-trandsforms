@@ -59,12 +59,12 @@ def test_normalize(mean, std, nd, input, expected):
     ("prob", "low", "hi", "a", "b", "expected"),
     [
         (None, -1, 1, 0.5, 0.5, AssertionError),
-        (1, "None", 1, 0.5, 0.5, AssertionError),
+        (1, "None", torch.tensor(1), 0.5, 0.5, AssertionError),
         (1, -1, -2, 0.5, 0.5, AssertionError),
         (1, -1, 1, "None", 0.5, AssertionError),
         (1, -1, 1, 0.5, -1, AssertionError),
-        (1, -1, 1, 0.5, 0.5, None),
-        (0.5, -100, 1000, 0.1, 0.9, None),
+        (1, torch.tensor([-1.0] * 4), 1, 0.5, 0.5, None),
+        (0.5, -100, torch.tensor([1000] * 4), 0.1, 0.9, None),
         (100, -100, 1000, 0.9, 0.1, AssertionError),
     ],
 )
@@ -86,9 +86,9 @@ def test_saltandpepper(prob, low, hi, a, b, expected):
         (1, "None", 1, 0.5, 0.5, AssertionError),
         (1, -1, -2, 0.5, 0.5, AssertionError),
         (1, -1, 1, "None", 0.5, AssertionError),
-        (1, -1, 1, 0.5, -1, AssertionError),
-        (1, -1, 1, 0.5, 0.5, None),
-        (0.5, -100, 1000, 0.1, 0.9, None),
+        (1, torch.tensor([-1.0] * 4), 1, 0.5, -1, AssertionError),
+        (1, torch.tensor(-1), 1, 0.5, 0.5, None),
+        (0.5, -100, torch.tensor([1000] * 4), 0.1, 0.9, None),
         (100, -100, 1000, 0.9, 0.1, AssertionError),
     ],
 )
