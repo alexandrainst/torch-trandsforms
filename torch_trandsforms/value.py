@@ -129,8 +129,8 @@ class SaltAndPepperNoise(KeyedNdTransform):
 
     Args:
         prob (float): 0-1 range of indices to overwrite (1 meaning every index will be noise)
-        low (float): minimum value to replace with
-        hi (float): maximum value to replace with
+        low (int, float, or torch.Tensor): minimum value(s) to replace with
+        hi (int, float, or torch.Tensor): maximum value(s) to replace with
         a (float or torch.Tensor): alpha value for the beta distribution (likely < 1). Can generate on any device using a=torch.tensor(a, device=device)
         b (float or torch.Tensor): beta value for the beta distribution (likely < 1). Can generate on any device using b=torch.tensor(b, device=device)
         copy_input (bool): Whether to make a copy of the input before applying noise (useful for visualization purposes and to keep an original for posterity)
@@ -150,9 +150,24 @@ class SaltAndPepperNoise(KeyedNdTransform):
         assert isinstance(prob, (int, float)) and 0.0 <= prob <= 1.0, f"prob must be a number between 0 and 1 (got {prob})"
         self.prob = prob
 
-        assert isinstance(low, (int, float, torch.FloatTensor)), f"low must be a number (got {prob})"
-        assert isinstance(hi, (int, float, torch.FloatTensor)) and low < hi, f"hi must be a number greater than low"
+        assert isinstance(low, (int, float, torch.Tensor)), f"low must be a number (got {type(low)})"
+        assert isinstance(hi, (int, float, torch.Tensor)), f"hi must be a number or tensor (got {type(hi)})"
+
+        if isinstance(hi, (int, float)) and isinstance(low, (int, float)):
+            assert low < hi, f"hi ({hi}) must be a number greater than low ({low})"
+        else:
+            diff = low < hi
+            assert isinstance(diff, torch.Tensor), f"this should never run - mypy check"
+            assert torch.all(diff), f"hi ({hi}) must be a number greater than low ({low})"
+
+        if isinstance(low, torch.Tensor) and low.ndim > 0:
+            low = low.view(*low.shape, *[1] * self.nd)
+
         self.low = low
+
+        if isinstance(hi, torch.Tensor) and hi.ndim > 0:
+            hi = hi.view(*hi.shape, *[1] * self.nd)
+
         self.hi = hi
 
         assert isinstance(a, (float, torch.Tensor)) and 0 < a, f"a must be a float or tensor greater than 0"
@@ -177,8 +192,8 @@ class AdditiveBetaNoise(SaltAndPepperNoise):
 
     Args:
         prob (float): 0-1 range of indices to add (1 meaning every index will have added noise)
-        low (float): minimum value to add with
-        hi (float): maximum value to add with
+        low (int, float, or torch.Tensor): minimum value(s) to add with
+        hi (int, float, or torch.Tensor): maximum value(s) to add with
         a (float or torch.Tensor): alpha value for the beta distribution (likely < 1). Can generate on any device using a=torch.tensor(a, device=device)
         b (float or torch.Tensor): beta value for the beta distribution (likely < 1). Can generate on any device using b=torch.tensor(b, device=device)
         copy_input (bool): Whether to make a copy of the input before applying noise (useful for visualization purposes and to keep an original for posterity)
