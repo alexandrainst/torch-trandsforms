@@ -157,7 +157,7 @@ class SaltAndPepperNoise(KeyedNdTransform):
             assert low < hi, f"hi ({hi}) must be a number greater than low ({low})"
         else:
             diff = low < hi
-            assert isinstance(diff, torch.Tensor), f"this should never run - mypy check"
+            assert isinstance(diff, torch.Tensor), f"this should never fail - mypy check"
             assert torch.all(diff), f"hi ({hi}) must be a number greater than low ({low})"
 
         if isinstance(low, torch.Tensor) and low.ndim > 0:
@@ -177,7 +177,8 @@ class SaltAndPepperNoise(KeyedNdTransform):
         self.copy_input = copy_input
 
     def apply(self, input, **params):
-        probs = torch.broadcast_to(torch.rand(*input.shape[-self.nd :], device=self.dist.concentration1.device) < self.prob, input.shape)
+        probs: torch.Tensor = torch.rand(*input.shape[-self.nd :], device=self.dist.concentration1.device) < self.prob  # type: ignore  # noqa
+        probs = torch.broadcast_to(probs, input.shape)
         values = torch.broadcast_to((self.low - self.hi) * self.dist.sample(input.shape[-self.nd :]) + self.hi, input.shape)
         if self.copy_input:
             input = input.clone()
@@ -209,7 +210,8 @@ class AdditiveBetaNoise(SaltAndPepperNoise):
     """
 
     def apply(self, input, **params):
-        probs = torch.broadcast_to(torch.rand(*input.shape[-self.nd :], device=self.dist.concentration1.device) < self.prob, input.shape)
+        probs: torch.Tensor = torch.rand(*input.shape[-self.nd :], device=self.dist.concentration1.device) < self.prob  # type: ignore  # noqa
+        probs = torch.broadcast_to(probs, input.shape)
         values = torch.broadcast_to((self.low - self.hi) * self.dist.sample(input.shape[-self.nd :]) + self.hi, input.shape)
         if self.copy_input:
             input = input.clone()
