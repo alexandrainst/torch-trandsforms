@@ -2,9 +2,10 @@ import subprocess
 import time
 
 import torch
+import torchvision
 
 from torch_trandsforms.rotation import RandomRotate, RandomRotate90
-from torch_trandsforms.shape import CenterCrop, RandomCrop, RandomFlip, RandomResize, Resize
+from torch_trandsforms.shape import CenterCrop, RandomCrop, RandomFlip, RandomPadding, RandomResize, Resize
 from torch_trandsforms.value import AdditiveBetaNoise, GaussianNoise, Normalize, SaltAndPepperNoise, UniformNoise
 
 
@@ -15,6 +16,7 @@ def write_file_head(file):
     file.write("## traNDsforms timing\n\n")
     file.write("### System Info\n\n")
     file.write(f"**CPU**: {cpu}\n\n**GPU**: {gpu}\n\n")
+    file.write(f"**torch**: {torch.__version__}\n\n**torchvision**: {torchvision.__version__}\n\n")
     file.write("### Basic Transforms\n\n")
     file.write("| Class | 10x64x64x64 | 10x64x64x64 CUDA | 10x128x128x128 | 10x128x128x128 CUDA |\n")
     file.write("|-------|-------------|------------------|----------------|---------------------|\n")
@@ -34,13 +36,18 @@ def test_standard(file, cl):
     else:
         transform = cl(p=1.0)
 
-    start_time = time.time()
-    transform(tensor=tensor64)
-    t64_time = time.time() - start_time
+    # prerun
+    transform(tensor=tensor128)
 
     start_time = time.time()
-    transform(tensor=tensor128)
-    t128_time = time.time() - start_time
+    for _ in range(10):
+        transform(tensor=tensor64)
+    t64_time = (time.time() - start_time) / 10
+
+    start_time = time.time()
+    for _ in range(10):
+        transform(tensor=tensor128)
+    t128_time = (time.time() - start_time) / 10
 
     tensor64 = tensor64.to("cuda:0")
     tensor128 = tensor128.to("cuda:0")
@@ -57,13 +64,18 @@ def test_standard(file, cl):
     else:
         transform = cl(p=1.0)
 
-    start_time = time.time()
-    transform(tensor=tensor64)
-    t64_cuda_time = time.time() - start_time
+    # prerun
+    transform(tensor=tensor128)
 
     start_time = time.time()
-    transform(tensor=tensor128)
-    t128_cuda_time = time.time() - start_time
+    for _ in range(10):
+        transform(tensor=tensor64)
+    t64_cuda_time = (time.time() - start_time) / 10
+
+    start_time = time.time()
+    for _ in range(10):
+        transform(tensor=tensor128)
+    t128_cuda_time = (time.time() - start_time) / 10
 
     file.write(f"| {transform.__class__.__name__} | {t64_time:.4f} | {t64_cuda_time:.4f} | {t128_time:.4f} | {t128_cuda_time:.4f} |\n")
 
@@ -121,10 +133,24 @@ def test_block(file, cl):
 def main():
     torch.manual_seed(451)
 
-    classes = [RandomRotate90, UniformNoise, Normalize, SaltAndPepperNoise, AdditiveBetaNoise, GaussianNoise, RandomFlip, RandomRotate]
+    classes = [
+        RandomRotate90,
+        UniformNoise,
+        Normalize,
+        SaltAndPepperNoise,
+        AdditiveBetaNoise,
+        GaussianNoise,
+        RandomFlip,
+        RandomRotate,
+        RandomPadding,
+    ]
     block_classes = [CenterCrop, RandomCrop, Resize, RandomResize]
 
     if torch.cuda.is_available():  # only run on CUDA systems
+        # prerun a single op on CUDA
+        te = torch.tensor([100.001] * 100, device="cuda")
+        te = te + torch.tensor(17, device="cuda")
+
         with open("TIMING.md", "w+") as file:
             write_file_head(file)
             for cl in classes:
