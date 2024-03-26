@@ -229,3 +229,41 @@ class RandomResize(KeyedNdTransform):
             input, size=None, scale_factor=params["scale_factor"], mode=self.interpolation_mode, align_corners=self.align_corners
         )
         return scaled.view(*sh[: -self.nd], *scaled.shape[-self.nd :])
+
+
+class RandomPadding(KeyedNdTransform):
+    """
+    Introduces random edge padding for the trailing `nd` dimensions.
+    Each side is padded individually from `min_pad` to `max_pad`
+
+    Args:
+        min_pad (int): Minimum padding for each side
+        max_pad (int): Maximum padding (inclusive) for each side
+        value (float, str, or torch.tensor): If number, does constant fill with the value. If str, attempts to use https://pytorch.org/docs/stable/generated/torch.nn.functional.pad.html padding modes (implemented for <=3 dimensions of padding)
+            If torch.tensor, fills the new padded area with the given value(s).
+            This works in ND, i.e. padding in 3 dimensions with a 0, 1, or 2D value works for a 5D input.
+            However, for ND tensors the input must be directly broadcastable to the leading N dimensions of the input (i.e. dimensions must be 1 or equal to input dimension)
+            Most of the time, a 0D-value is equivalent (but slower) to a scalar value (so choose `0.0` over torch.tensor(0.0))
+    """
+
+    def __init__(self, min_pad=0, max_pad=3, pad_val=0.0, p=0.5, nd=3, keys="*"):
+        super().__init__(p, nd, keys)
+
+        assert (
+            isinstance(min_pad, int) and min_pad >= 0
+        ), f"min_pad must be a positive or 0 integer, found {min_pad} with dtype {type(min_pad)}"
+        assert (
+            isinstance(max_pad, int) and max_pad >= 0
+        ), f"max_pad must be a positive or 0 integer, found {max_pad} with dtype {type(max_pad)}"
+        assert max_pad >= min_pad, f"max_pad must be greater than or equal to min_pad, found max_pad = {max_pad} and min_pad = {min_pad}"
+
+        self.min_pad = min_pad
+        self.max_pad = max_pad
+        self.pad_val = pad_val
+
+    def get_parameters(self, **inputs):
+        return {"padding": tuple(torch.randint(self.min_pad, self.max_pad + 1, (2 * self.nd,)).numpy())}
+
+    def apply(self, input, **params):
+        padding = params["padding"]
+        return F.pad(input, padding, value=self.pad_val)

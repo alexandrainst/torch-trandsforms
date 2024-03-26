@@ -5,7 +5,7 @@ import numpy
 import pytest
 import torch
 
-from torch_trandsforms.shape import CenterCrop, Crop, RandomCrop, RandomFlip, RandomResize, Resize
+from torch_trandsforms.shape import CenterCrop, Crop, RandomCrop, RandomFlip, RandomPadding, RandomResize, Resize
 
 
 def test_crop():
@@ -146,3 +146,26 @@ def test_randomscale(size, scale_factor, nd, expected):
             t_size_max = (torch.tensor(scaler.scale_factor)[:, 1] * torch.tensor([8.0, 8.0, 8.0])).floor()
             assert torch.all(re_size[-nd:] >= t_size_min)
             assert torch.all(re_size[-nd:] <= t_size_max)
+
+
+@pytest.mark.parametrize(
+    ("input_size", "min_pad", "max_pad", "value", "nd", "expected"),
+    [
+        ((10, 10, 10), 0, 0, 0.0, 3, None),
+        ((5,), 5, 5, 5.5, 1, None),
+        ((3, 3, 3), 1, 7, torch.tensor([1.0, 2.0, 3.0]), 2, None),
+        ((4, 8, 8, 8), "failure", 8, 0.0, 3, AssertionError),
+        ((4, 8, 8, 8), 8, "failure", 0.0, 3, AssertionError),
+        ((4, 8, 8, 8), 10, 8, 0.0, 3, AssertionError),
+    ],
+)
+def test_randompadding(input_size, min_pad, max_pad, value, nd, expected):
+    with pytest.raises(expected) if expected is not None else nullcontext():
+        tensor = torch.zeros(input_size)
+
+        padder = RandomPadding(min_pad, max_pad, value, p=1.0, nd=nd)
+
+        output = padder(tensor=tensor)["tensor"]
+
+        for i in range(1, nd + 1):
+            assert input_size[-i] + 2 * min_pad <= output.shape[-i] <= input_size[-i] + 2 * max_pad

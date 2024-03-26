@@ -177,7 +177,7 @@ class SaltAndPepperNoise(KeyedNdTransform):
         self.copy_input = copy_input
 
     def apply(self, input, **params):
-        probs: torch.Tensor = torch.rand(*input.shape[-self.nd :], device=self.dist.concentration1.device) < self.prob  # type: ignore  # noqa
+        probs: torch.Tensor = torch.rand(*input.shape[-self.nd :], device=self.dist.concentration1.device) < self.prob
         probs = torch.broadcast_to(probs, input.shape)
         values = torch.broadcast_to((self.low - self.hi) * self.dist.sample(input.shape[-self.nd :]) + self.hi, input.shape)
         if self.copy_input:
@@ -210,7 +210,7 @@ class AdditiveBetaNoise(SaltAndPepperNoise):
     """
 
     def apply(self, input, **params):
-        probs: torch.Tensor = torch.rand(*input.shape[-self.nd :], device=self.dist.concentration1.device) < self.prob  # type: ignore  # noqa
+        probs: torch.Tensor = torch.rand(*input.shape[-self.nd :], device=self.dist.concentration1.device) < self.prob
         probs = torch.broadcast_to(probs, input.shape)
         values = torch.broadcast_to((self.low - self.hi) * self.dist.sample(input.shape[-self.nd :]) + self.hi, input.shape)
         if self.copy_input:
