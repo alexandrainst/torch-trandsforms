@@ -1,4 +1,5 @@
 """Tests for hello function."""
+
 from contextlib import nullcontext
 from math import prod
 
