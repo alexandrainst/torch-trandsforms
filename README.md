@@ -47,72 +47,60 @@ conda install torch_trandsforms
 
 ## Usage
 
-Creating the RandomRotate90 class, as an example of customizing your own transform:
+Creating a single transform that rotates both input data and ground truth data. The data is considered 3D with a leading channel dimension.
+
+![RandomRotate](./examples/figures/RandomRotate.png)
 
 ```python
 import torch
-from torch_trandsforms.base import BaseTransform
+from torch_trandsforms import RandomRotate
 
-class RandomRotate90(BaseTransform):  # note the use of BaseTransform as base class here
-    """
-    Rotates the input 90 degrees around a randomly determined axis
-    NOTE: This is the not actual implementation of RandomRotate90
-    """
-    def __init__(self, nd=3, p=0.5):
-        super().__init__(p = p, nd = nd)
-        self.options = self._get_options(nd)
+# create data and target
+input_tensor = torch.rand((3,16,16,16), device="cuda", dtype=torch.float32)
+target_tensor = torch.rand((1,16,16,16), device="cuda", dtype=torch.float32)
 
-    def _get_options(self, nd):
-        """
-        Create potential rotations based on the nd argument
-        This can be lower than the number of dimensions of the actual input
-            in case you do not want a leading dimension to be rotated
-        """
-        options = []
+# create our random rotator, which rotates dim -3 from -90 to 90, dim -2 from -90 to 90, and dim -1 from -180 to 180
+# this operates only on inputs with the keynames "input" or "target" and in the trailing 3 dimensions
+rotator = RandomRotate((90,90,180), nd=3, keys=["input", "target"], align_corners=True)
 
-        for i in range(nd):
-            for j in range(nd):
-                if not i == j:
-                    options.append((-i-1, -j-1))
+# transform the data and target
+transformed = rotator(input=input_tensor, target=target_tensor)
 
-        return options
-    
-    def get_parameters(self, **inputs):
-        """
-        overrides the base get_parameters to choose a random
-            rotation option for each input
-        """
-        rotation = random.choice(self.options)
-        return {'rot':rotation}
-    
-    def apply(self, input, **params):
-        """
-        apply MUST be overwritten 
-        It is applied to each input sequentially, and thus must have
-            parameters that are exactly equal for each instance,
-            meaning most likely NO randomization here
-        """
-        rot = params['rot']
-        return torch.rot90(input, dims=rot)
+# the data is recovered using the same keys as in the input
+data = transformed["input"]
+target = transformed["target"]
 ```
 
-And we can now use our class to demonstrate the library functionality:
+Create a Compose object to run a sequence of transforms one after another:
+
+![ComposeExample](./examples/figures/Compose.png)
 
 ```python
-torch.manual_seed(451)  # all randomization uses torch.random in the actual implementation
+import torch
+from torch_trandsforms import Compose, RandomResize, RandomRotate, RandomCrop, RandomApply, UniformNoise, GaussianNoise, SaltAndPepperNoise
 
-tensor = torch.arange(16).view(2,2,2,2)  # create a 4D tensor
-another_tensor = torch.arange(16).view(2,2,2,2)  # create an exactly equal tensor for demonstration
+# create data and target
+input_tensor = torch.rand((3,16,16,16), device="cuda", dtype=torch.float32)
+target_tensor = torch.rand((16,16,16), device="cuda").round()
 
-print(tensor)
-print(another_tensor)
+# create our transform pipeline using some shape/size augmentation on both input and target, as well as some noise on the input
+transform = Compose([
+    RandomResize(0.3, p=0.75, keys="*"),  # keys="*" is the same as keys=["foo", "bar"] here
+    RandomRotate([180,180,180], sample_mode="nearest", p=0.9, nd=3, keys=["foo", "bar"]),
+    RandomCrop(16, padding=0, p=1.0, keys="*"),  # nd is 3 by default - but nd=1,2,3 all work here, just on the trailing dimensions
+    RandomApply([
+        UniformNoise(p=1.0, low=-0.2, hi=0.2, keys=["foo"]),  # for most noise transforms, we only want the data to be augmented
+        GaussianNoise(mean=torch.tensor(0.0, device="cuda"), std=0.05, p=1.0, keys=["foo"]),
+        SaltAndPepperNoise(0.2, low=0.0, hi=1.0, a=torch.tensor(0.5, device="cuda"), p=1.0, copy_input=True, keys=["foo"])
+    ], min=1, max=1)  # apply exactly 1 of the above three transforms each time
+])
 
-random_rotator = RandomRotate90(nd=2, p=1.)  # we only want the last two dimensions to be rotateable but it should rotate every time (p=1)
+# transform the data and target
+transformed = transform(foo=input_tensor, bar=target_tensor)
 
-transformed = random_rotator(data=tensor, foo=another_tensor)  # "data" is arbitrary, it is the key that will be returned, demonstrated by "foo"
-
-print(transformed['data'])
-print(transformed['foo'])
+# the data is recovered using the same keys as in the input
+data = transformed["foo"]
+target = transformed["bar"]
 ```
 
 For more examples of use, see [EXAMPLES.md](https://github.com/alexandrainst/torch-trandsforms/blob/main/examples/EXAMPLES.md)
@@ -146,6 +134,7 @@ Later additions (and reasons for postponing):
  - [ ] Affine transformations (missing efficient ND computation)
 
 Potential additions:
+ - [ ] ND Bounding Boxes
  - [ ] Geometric operations using PyTorch Geometric
  - [ ] Point clouds, meshes using PyTorch 3D
  - [ ] Data loading, sampling, and structures
