@@ -14,6 +14,7 @@ def write_file_head(file):
     gpu = subprocess.check_output("nvidia-smi -L", shell=True).decode().strip().replace("GPU 0: ", "").split(" (UUID")[0]
 
     file.write("## traNDsforms timing\n\n")
+    file.write("Automatically generated with test_speed.py\n\n")
     file.write("### System Info\n\n")
     file.write(f"**CPU**: {cpu}\n\n**GPU**: {gpu}\n\n")
     file.write(f"**torch**: {torch.__version__}\n\n**torchvision**: {torchvision.__version__}\n\n")
