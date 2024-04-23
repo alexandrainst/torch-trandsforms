@@ -5,7 +5,7 @@ from importlib import metadata as importlib_metadata
 
 from .ops import Cast, ConvertDtype, To, ToDevice
 from .rotation import RandomRotate, RandomRotate90
-from .shape import CenterCrop, RandomCrop, RandomFlip, RandomResize, Resize
+from .shape import CenterCrop, RandomCrop, RandomFlip, RandomPadding, RandomResize, Resize
 from .structure import Compose, RandomApply
 from .value import AdditiveBetaNoise, GaussianNoise, Normalize, SaltAndPepperNoise, UniformNoise
 
@@ -29,6 +29,7 @@ __all__ = sorted(
         "RandomRotate",
         "Resize",
         "RandomResize",
+        "RandomPadding",
     ]
 )
 
