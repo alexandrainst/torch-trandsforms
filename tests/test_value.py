@@ -6,7 +6,7 @@ from numbers import Number
 import pytest
 import torch
 
-from torch_trandsforms.value import AdditiveBetaNoise, GaussianNoise, Normalize, SaltAndPepperNoise, UniformNoise
+from torch_trandsforms.value import AdditiveBetaNoise, GaussianNoise, Normalize, RandomBlock, SaltAndPepperNoise, UniformNoise
 
 
 @pytest.mark.parametrize(
@@ -150,3 +150,34 @@ def test_gausswarning(mean, std, nd, expected):
         noiser = GaussianNoise(mean=mean, std=std, nd=nd)
         result = noiser(tensor=tensor)["tensor"]
         assert tensor.shape == result.shape
+
+
+@pytest.mark.parametrize(
+    ("block_val", "max_sizes", "nd", "expected"),
+    [
+        (0, 0.5, 3, type(None)),
+        ([3, 1], 1, 3, type(None)),
+        (0, [1, 2], 3, AssertionError),
+        (0, torch.arange(4).view(2, 2) + 1, 2, RuntimeError),
+        (0, -1, 3, RuntimeError),
+        (None, 1, 3, AssertionError),
+        (0, None, 3, AssertionError),
+        (torch.arange(8).view(2, 4), torch.tensor(1), 2, type(None)),
+        (torch.tensor(1), torch.tensor([4, 4, 6], dtype=torch.int), 3, UserWarning),
+        (UniformNoise(p=1.0), 4, 1, type(None)),
+        (GaussianNoise(p=1.0), 4, 1, AssertionError),
+    ],
+)
+def test_randomblock(block_val, max_sizes, nd, expected):
+    if issubclass(expected, Warning):
+        with pytest.warns(expected):
+            tensor = torch.arange(128).view(2, 4, 4, 4)
+            blocker = RandomBlock(block_val=block_val, max_sizes=max_sizes, nd=nd, p=1.0)
+            result = blocker(tensor=tensor)["tensor"]
+            assert tensor.shape == result.shape
+    else:
+        with pytest.raises(expected) if issubclass(expected, Exception) else nullcontext():
+            tensor = torch.arange(128).view(2, 4, 4, 4)
+            blocker = RandomBlock(block_val=block_val, max_sizes=max_sizes, nd=nd, p=1.0)
+            result = blocker(tensor=tensor)["tensor"]
+            assert tensor.shape == result.shape

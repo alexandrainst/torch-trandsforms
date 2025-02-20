@@ -85,7 +85,7 @@ class Cast(KeyedTransform):
             return self.dtypes
         return self.dtypes[self.keys.index(key)]
 
-    def apply(self, input, **params):
+    def apply_transform(self, input, **params):
         ckey = params["key_name"]
         dtype = self._get_current_dtype(ckey)
         return input.to(dtype)
@@ -134,7 +134,7 @@ class ToDevice(KeyedTransform):
             return self.device
         return self.device[self.keys.index(key)]
 
-    def apply(self, input, **params):
+    def apply_transform(self, input, **params):
         ckey = params["key_name"]
         device = self._get_current_device(ckey)
         return input.to(device)

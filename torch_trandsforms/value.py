@@ -7,9 +7,9 @@ import warnings
 import numpy
 import torch
 
-from .base import KeyedNdTransform, KeyedTransform
+from .base import BaseTransform, KeyedNdTransform, KeyedTransform
 
-__all__ = ["Normalize", "UniformNoise", "SaltAndPepperNoise", "AdditiveBetaNoise", "GaussianNoise"]
+__all__ = ["Normalize", "UniformNoise", "SaltAndPepperNoise", "AdditiveBetaNoise", "GaussianNoise", "RandomBlock"]
 
 
 class Normalize(KeyedNdTransform):
@@ -77,7 +77,7 @@ class Normalize(KeyedNdTransform):
 
         return value
 
-    def apply(self, input, **params):
+    def apply_transform(self, input, **params):
         mean = torch.broadcast_to(self.mean, input.shape)
         std = torch.broadcast_to(self.std, input.shape)
 
@@ -104,7 +104,7 @@ class UniformNoise(KeyedTransform):
         self.low = low
         self.hi = hi
 
-    def apply(self, input, **params):
+    def apply_transform(self, input, **params):
         """
         Applies a randomly generated uniform noise to the input (if input is in keys)
 
@@ -133,7 +133,7 @@ class SaltAndPepperNoise(KeyedNdTransform):
         hi (int, float, or torch.Tensor): maximum value(s) to replace with
         a (float or torch.Tensor): alpha value for the beta distribution (likely < 1). Can generate on any device using a=torch.tensor(a, device=device)
         b (float or torch.Tensor): beta value for the beta distribution (likely < 1). Can generate on any device using b=torch.tensor(b, device=device)
-        copy_input (bool): Whether to make a copy of the input before applying noise (useful for visualization purposes and to keep an original for posterity)
+        copy_input (bool): Whether to make a copy of the input before apply_transforming noise (useful for visualization purposes and to keep an original for posterity)
 
     Example:
         >>> tensor = torch.arange(16).view(2,2,2,2)  # CxDxHxW
@@ -176,7 +176,7 @@ class SaltAndPepperNoise(KeyedNdTransform):
 
         self.copy_input = copy_input
 
-    def apply(self, input, **params):
+    def apply_transform(self, input, **params):
         probs: torch.Tensor = torch.rand(*input.shape[-self.nd :], device=self.dist.concentration1.device) < self.prob
         probs = torch.broadcast_to(probs, input.shape)
         values = torch.broadcast_to((self.low - self.hi) * self.dist.sample(input.shape[-self.nd :]) + self.hi, input.shape)
@@ -197,7 +197,7 @@ class AdditiveBetaNoise(SaltAndPepperNoise):
         hi (int, float, or torch.Tensor): maximum value(s) to add with
         a (float or torch.Tensor): alpha value for the beta distribution (likely < 1). Can generate on any device using a=torch.tensor(a, device=device)
         b (float or torch.Tensor): beta value for the beta distribution (likely < 1). Can generate on any device using b=torch.tensor(b, device=device)
-        copy_input (bool): Whether to make a copy of the input before applying noise (useful for visualization purposes and to keep an original for posterity)
+        copy_input (bool): Whether to make a copy of the input before apply_transforming noise (useful for visualization purposes and to keep an original for posterity)
 
     Example:
         >>> tensor = torch.arange(16).view(2,2,2,2)  # CxDxHxW
@@ -209,7 +209,7 @@ class AdditiveBetaNoise(SaltAndPepperNoise):
         >>> noiser = AdditiveBetaNoise(prob=0.1, nd=3)  # generates probabilities on a color-level (i.e. additive R/G/B noise)
     """
 
-    def apply(self, input, **params):
+    def apply_transform(self, input, **params):
         probs: torch.Tensor = torch.rand(*input.shape[-self.nd :], device=self.dist.concentration1.device) < self.prob
         probs = torch.broadcast_to(probs, input.shape)
         values = torch.broadcast_to((self.low - self.hi) * self.dist.sample(input.shape[-self.nd :]) + self.hi, input.shape)
@@ -288,6 +288,113 @@ class GaussianNoise(KeyedNdTransform):
 
         return mean, std
 
-    def apply(self, input, **params):
+    def apply_transform(self, input, **params):
         sample = torch.normal(mean=torch.broadcast_to(self.mean, input.shape), std=torch.broadcast_to(self.std, input.shape))
         return input + sample
+
+
+class RandomBlock(KeyedNdTransform):
+    """
+    Blocks random areas in the named inputs.
+    All named inputs are blocked in the same way with the same values for best reproducibility. This is a problem for mismatched input sizes (it may work, but it breaks expected functionality most likely)
+    Use either constant values or provide a Value noise sampler (such as GaussianNoise or SaltAndPepperNoise)
+
+    Args:
+        block_val (value, list of values, or KeyedNdTransform): Value or value generating module to insert over original inputs.
+            Inserts values into leading dimensions (i.e. `input.dims - self.nd` for unspecified dimensionality (constant value))
+        max_sizes (float (relative size), int (absolute size), or iterable of float or integer): Trailing-based list of maximum sizes
+    """
+
+    def __init__(self, block_val=0, max_sizes=0.5, p=0.5, nd=3, keys="*"):
+        super().__init__(p, nd, keys)
+        self.block_val, self.max_sizes = self._validate_args(block_val, max_sizes)
+
+    def _validate_args(self, block_val, max_sizes):
+        """
+        Ensures all input values are as correct as can be (without knowing anything about inputs)
+        """
+        assert isinstance(
+            block_val, (float, int, torch.Tensor, tuple, list, BaseTransform)
+        ), f"Did not understand block_val type, got {type(block_val)}"
+        if isinstance(block_val, torch.Tensor) and block_val.ndim == 0:
+            block_val = block_val.item()
+        if isinstance(block_val, (tuple, list, torch.Tensor)):
+            #  assert len(block_val) == self.nd, "Length of block_val must match number of dimensions (nd)"  # Not needed, block_val should be channel(s) dependant, not dimensions
+            assert [
+                isinstance(val, (float, int, torch.Tensor)) for val in block_val
+            ], f"Expected constant values in block_val, got {[type(val) for val in block_val]}"
+        if isinstance(block_val, KeyedNdTransform):
+            assert block_val.nd == self.nd, f"nd must match between block_val (got {block_val.nd}) and self (got {self.nd})"
+
+        assert isinstance(max_sizes, (float, int, torch.Tensor, tuple, list)), f"Did not understand max_sizes type, got {type(max_sizes)}"
+        if isinstance(max_sizes, (float, int)):
+            max_sizes = [max_sizes] * self.nd
+        if isinstance(max_sizes, torch.Tensor) and max_sizes.ndim == 0:
+            max_sizes = [max_sizes.item()] * self.nd
+        if isinstance(max_sizes, (tuple, list, torch.Tensor)):
+            assert len(max_sizes) == self.nd, "Length of max_sizes must match number of dimensions (nd)"
+            assert [
+                isinstance(sz, (float, int, torch.Tensor)) for sz in max_sizes
+            ], f"Max sizes must be float, int, or tensor hereof. Got {[type(sz) for sz in max_sizes]}"
+
+        return block_val, max_sizes
+
+    def get_parameters(self, **inputs):
+        shapes = [i.shape[-self.nd :] for k, i in zip(inputs.keys(), inputs.values()) if k in self.keys or self.keys == "*"]
+        assert all([shapes[0] == shape for shape in shapes[1:]]), "All input shapes at the trailing `nd` dimensions must be the same"
+
+        inp = list(inputs.values())[0]
+        block = self._get_block(inp)
+        values = self._get_values(inp, block)
+
+        return {"block": block, "values": values}
+
+    def _get_block(self, input):
+        """
+        Returns a list of min/max coordinates for trailing self.nd dimensions based on the max sizes and the input
+        """
+        max_sizes = []
+        for idx, sz in enumerate(self.max_sizes):
+            if isinstance(sz, torch.Tensor):
+                sz = sz.item()
+            if isinstance(sz, float):
+                sz = int(sz * input.shape[-self.nd + idx])
+            if sz > input.shape[-self.nd + idx]:
+                warnings.warn(
+                    f"Expected size of box should not exceed input along dimension. Got size {sz} for dimension {-self.nd + idx} of size {input.shape[-self.nd + idx]}. Input max_sizes was {self.max_sizes}. Resizing to input dim size",
+                    UserWarning,
+                )
+                sz = input.shape[-self.nd + idx]
+            max_sizes.append(sz)
+
+        coords = []
+        for dim in range(self.nd):
+            sz = torch.randint(1, max_sizes[dim] + 1, (1,)).item()
+            mi = torch.randint(input.shape[-self.nd + dim] - sz + 1, (1,)).item()
+            ma = mi + sz
+            coords.append((mi, ma))
+
+        return coords
+
+    def _get_values(self, input, block):
+        """
+        Returns the value(s) with which to override the original input(s)
+        """
+        block_val = self.block_val
+        if isinstance(block_val, (float, int)):
+            return block_val
+        if isinstance(block_val, (tuple, list)):
+            block_val = torch.tensor(block_val)
+        if isinstance(block_val, torch.Tensor):
+            leading = input.ndim - block_val.ndim - self.nd
+            return block_val.view(*([1] * leading), *block_val.shape, *([1] * self.nd))
+        if isinstance(block_val, BaseTransform):
+            block_copy = input[(..., *[slice(i, a) for i, a in block])].clone()
+            return block_val(val=block_copy)["val"]
+        raise ValueError(
+            f"block_val of type {type(block_val)} did not work but was not caught. Please report this at https://github.com/alexandrainst/torch-trandsforms/issues"
+        )
+
+    def apply_transform(self, input, **params):
+        input[(..., *[slice(i, a) for i, a in params["block"]])] = params["values"]
+        return input

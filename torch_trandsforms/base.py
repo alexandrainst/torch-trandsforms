@@ -10,8 +10,8 @@ __all__ = ["BaseTransform", "KeyedTransform", "NdTransform", "KeyedNdTransform"]
 class BaseTransform(torch.nn.Module):
     """Base transformation class providing basic utility for all ND transforms
     Users can extend this using `class MyTransform(BaseTransform)`
-     - Any extension MUST override the apply method thus: `def apply(self, input, **params):`
-     - additionally, users can override `get_parameters(self, **inputs)`, returning a dict of randomization parameters to apply to each **input. This is unpacked in `apply` as shown above
+     - Any extension MUST override the apply_transform method thus: `def apply_transform(self, input, **params):`
+     - additionally, users can override `get_parameters(self, **inputs)`, returning a dict of randomization parameters to apply_transform to each **input. This is unpacked in `apply_transform` as shown above
     IMPORTANT NOTE: Operations do and should expect the common PyTorch order of input tensors:
      - For example, 3*H*W for RGB images or (1*)D*H*W for common volumes and C*D*H*W for multi-channel volume data
      - Any Transform should operate equally on 1*D*H*W as D*H*W if specified, or at the very least explicitly state the expected dimensionality
@@ -33,7 +33,7 @@ class BaseTransform(torch.nn.Module):
 
     def __call__(self, **inputs):
         """
-        Calls `apply` on each input with same params for each
+        Calls `apply_transform` on each input with same params for each
 
         Args:
             inputs (any): keyword args containing `torch.Tensor`s or whatever else the transform calls for
@@ -45,11 +45,11 @@ class BaseTransform(torch.nn.Module):
             params = self.get_parameters(**inputs)
 
             for key, value in inputs.items():
-                inputs[key] = self.apply(value, **params)
+                inputs[key] = self.apply_transform(value, **params)
 
         return inputs
 
-    def apply(self, input, **params):
+    def apply_transform(self, input, **params):
         raise NotImplementedError("BaseTransform is a superclass with no utility. Extend it using `class MyTransform(BaseTransform)`")
 
     def __repr__(self):
@@ -74,8 +74,8 @@ class KeyedTransform(BaseTransform):
 
     def __call__(self, **inputs):
         """
-        Calls `apply` on each named input (given during __init__) with same params for each
-        Extends `**params` with the input key under 'key_name' for use in apply
+        Calls `apply_transform` on each named input (given during __init__) with same params for each
+        Extends `**params` with the input key under 'key_name' for use in apply_transform
 
         Args:
             inputs (any): keyword args containing `torch.Tensor`s or whatever else the transform calls for
@@ -89,7 +89,7 @@ class KeyedTransform(BaseTransform):
             for key, value in inputs.items():
                 if key in self.keys or self.keys == "*":
                     params["key_name"] = key
-                    inputs[key] = self.apply(value, **params)
+                    inputs[key] = self.apply_transform(value, **params)
 
         return inputs
 
@@ -120,7 +120,7 @@ class NdTransform(BaseTransform):
 
     def __call__(self, **inputs):
         """
-        Calls `apply` on each input with same params for each, ensuring all comply with dimensionality first
+        Calls `apply_transform` on each input with same params for each, ensuring all comply with dimensionality first
 
         Args:
             inputs (any): keyword args containing `torch.Tensor`s or whatever else the transform calls for
@@ -153,12 +153,12 @@ class KeyedNdTransform(KeyedTransform, NdTransform):
 
     def __call__(self, **inputs):
         """
-        Calls `apply` on each named input (given during __init__) with same params for each,
+        Calls `apply_transform` on each named input (given during __init__) with same params for each,
             ensuring a named input complies with dimensionality.
-            Keep in mind this functionality only activates when the call to apply would,
+            Keep in mind this functionality only activates when the call to apply_transform would,
             i.e. when the random generator is lower than the threshold and the key exists in the
             list of named keys (or keys=="*")
-        Extends `**params` with the input key under 'key_name' for use in `apply`
+        Extends `**params` with the input key under 'key_name' for use in `apply_transform`
 
         Args:
             inputs (any): keyword args containing `torch.Tensor`s or whatever else the transform calls for
@@ -173,7 +173,7 @@ class KeyedNdTransform(KeyedTransform, NdTransform):
                 self._check_nd_compliance(key, value)
                 if key in self.keys or self.keys == "*":
                     params["key_name"] = key
-                    inputs[key] = self.apply(value, **params)
+                    inputs[key] = self.apply_transform(value, **params)
 
         return inputs
 

@@ -23,7 +23,7 @@ def test_base_classes(cl):
     assert len(parameters.keys()) == 0
 
     with pytest.raises(NotImplementedError):
-        transform.apply(**input, **parameters)
+        transform.apply_transform(**input, **parameters)
 
     results = transform(**no_input)
     assert results == no_input

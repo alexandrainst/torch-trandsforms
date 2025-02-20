@@ -7,7 +7,7 @@ from .ops import Cast, ConvertDtype, To, ToDevice
 from .rotation import RandomRotate, RandomRotate90
 from .shape import CenterCrop, RandomCrop, RandomFlip, RandomPadding, RandomResize, Resize
 from .structure import Compose, RandomApply
-from .value import AdditiveBetaNoise, GaussianNoise, Normalize, SaltAndPepperNoise, UniformNoise
+from .value import AdditiveBetaNoise, GaussianNoise, Normalize, RandomBlock, SaltAndPepperNoise, UniformNoise
 
 __all__ = sorted(
     [
@@ -30,6 +30,7 @@ __all__ = sorted(
         "Resize",
         "RandomResize",
         "RandomPadding",
+        "RandomBlock",
     ]
 )
 
