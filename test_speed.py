@@ -6,7 +6,7 @@ import torchvision
 
 from torch_trandsforms.rotation import RandomRotate, RandomRotate90
 from torch_trandsforms.shape import CenterCrop, RandomCrop, RandomFlip, RandomPadding, RandomResize, Resize
-from torch_trandsforms.value import AdditiveBetaNoise, GaussianNoise, Normalize, SaltAndPepperNoise, UniformNoise
+from torch_trandsforms.value import AdditiveBetaNoise, GaussianNoise, Normalize, RandomBlock, SaltAndPepperNoise, UniformNoise
 
 
 def write_file_head(file):
@@ -144,6 +144,7 @@ def main():
         RandomFlip,
         RandomRotate,
         RandomPadding,
+        RandomBlock,
     ]
     block_classes = [CenterCrop, RandomCrop, Resize, RandomResize]
 
