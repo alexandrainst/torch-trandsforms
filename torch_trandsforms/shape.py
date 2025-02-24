@@ -1,6 +1,6 @@
 """Transforms for shape and size"""
 
-from typing import Any, List, Optional
+from typing import Any, Iterable, List, Optional
 
 import numpy
 import torch
@@ -50,7 +50,7 @@ class CenterCrop(Crop):
 
         return {"pos": pos}
 
-    def apply(self, input, **params):
+    def apply_transform(self, input, **params):
         pos = params["pos"]
         return F.crop(input, pos, self.size, padding=self.padding)
 
@@ -80,7 +80,7 @@ class RandomCrop(Crop):
 
         return {"pos": pos}
 
-    def apply(self, input, **params):
+    def apply_transform(self, input, **params):
         pos = params["pos"]
         return F.crop(input, pos, self.size, padding=self.padding)
 
@@ -97,13 +97,13 @@ class RandomFlip(KeyedNdTransform):
     def get_parameters(self, **inputs):
         return {"dim": torch.randint(0, self.nd, size=(1,)).item()}
 
-    def apply(self, input, **params):
+    def apply_transform(self, input, **params):
         return input.flip(params["dim"])
 
 
 class Resize(KeyedNdTransform):
     """
-    Apply a given scale factor or size, one of which must be provided
+    Apply_transform a given scale factor or size, one of which must be provided
     Scales all named inputs the same way
 
     Args:
@@ -127,9 +127,10 @@ class Resize(KeyedNdTransform):
         self.align_corners = align_corners
         self.interpolation_mode = interpolation_mode
 
-    def apply(self, input, **params):
+    def apply_transform(self, input, **params):
         # determine size based on original args
         if self.size is None:
+            assert isinstance(self.scale_factor, Iterable), "Ensure we can iterate over scale_factor"
             size = tuple(int(d * f) for d, f in zip(input.shape[-self.nd :], self.scale_factor))
         else:
             size = tuple(self.size.tolist())
@@ -145,7 +146,7 @@ class Resize(KeyedNdTransform):
 
 class RandomResize(KeyedNdTransform):
     """
-    Apply a random scale factor or size, one of which must be provided, to named inputs
+    Apply_transform a random scale factor or size, one of which must be provided, to named inputs
     Scales all named inputs the same way
 
     Args:
@@ -213,7 +214,7 @@ class RandomResize(KeyedNdTransform):
             return {"scale_factor": scale_factor}
         raise RuntimeError("Somehow found neither self.size nor self.scale_factor")
 
-    def apply(self, input, **params):
+    def apply_transform(self, input, **params):
         sh = input.shape
 
         # ensure input dimensionality matches torch expectations
@@ -264,6 +265,6 @@ class RandomPadding(KeyedNdTransform):
     def get_parameters(self, **inputs):
         return {"padding": tuple(torch.randint(self.min_pad, self.max_pad + 1, (2 * self.nd,)).numpy())}
 
-    def apply(self, input, **params):
+    def apply_transform(self, input, **params):
         padding = params["padding"]
         return F.pad(input, padding, value=self.pad_val)

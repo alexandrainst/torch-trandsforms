@@ -55,7 +55,7 @@ class RandomRotate90(KeyedNdTransform):  # note the use of NdTransform as base c
         rotation = self.options[randint]
         return {"rot": rotation}
 
-    def apply(self, input, **params):
+    def apply_transform(self, input, **params):
         """
         Applies the rotation combination
 
@@ -123,7 +123,7 @@ class RandomRotate(KeyedNdTransform):
         rotation = [(rot[0] - rot[1]) * torch.rand((1,)).item() + rot[1] for rot in self.rotation]
         return {"rot": rotation}
 
-    def apply(self, input, **params):
+    def apply_transform(self, input, **params):
         osh = input.shape
         # check that input dimensionality is appropriate for grid_sample or make it so
         if input.ndim < self.nd + 2:
