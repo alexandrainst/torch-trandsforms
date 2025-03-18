@@ -74,9 +74,16 @@ class RandomRotate(KeyedNdTransform):
     """
     Applies a random rotation in the trailing `nd` axes
     Currently only implemented for `nd` <= 3
+
+    Args:
+        rotation (float, int, iterable, numpy.ndarray, or torch.Tensor): Rotation allowance in each `nd` dimension
+
+    See `torch_trandsforms._functional.rotate` for further arguments
     """
 
-    def __init__(self, rotation, sample_mode="bilinear", padding_mode="zeros", align_corners=None, p=0.5, nd=3, keys="*"):
+    def __init__(
+        self, rotation, output_mode="crop", sample_mode="bilinear", padding_mode="zeros", align_corners=None, p=0.5, nd=3, keys="*"
+    ):
         super().__init__(p, nd, keys)
         if self.nd > 3:
             raise NotImplementedError(f"Arbitrary rotation is only implemented for nd <= 3, got {nd}")
@@ -112,6 +119,7 @@ class RandomRotate(KeyedNdTransform):
             self.rotation[idx][0] = -self.rotation[idx][1]
 
         # set parameters for rotation
+        self.output_mode = output_mode
         self.sample_mode = sample_mode
         self.padding_mode = padding_mode
         self.align_corners = align_corners
@@ -129,11 +137,21 @@ class RandomRotate(KeyedNdTransform):
         if input.ndim < self.nd + 2:
             input = input.view(*[1] * (self.nd + 2 - input.ndim), *input.shape)
 
-        return rotate(
+        rotated = rotate(
             input,
             params["rot"],
             input.size(),
+            mode=self.output_mode,
             sample_mode=self.sample_mode,
             padding_mode=self.padding_mode,
             align_corners=self.align_corners,
-        ).view(*osh)
+        )
+
+        # there surely is a cleaner way to do this but I am too tired to write it properly
+        # TODO: do this better
+        for _ in range(max(len(osh) - rotated.ndim, 0)):
+            rotated = rotated.unsqueeze(0)
+        for _ in range(max(rotated.ndim - len(osh), 0)):
+            rotated = rotated.squeeze(0)
+
+        return rotated

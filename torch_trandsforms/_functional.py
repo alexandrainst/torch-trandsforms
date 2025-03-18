@@ -5,7 +5,7 @@ from numbers import Number
 import torch
 import torch.nn.functional as t_F
 
-from ._utils import get_affine_matrix, get_rot_2d, get_rot_3d, get_tensor_sequence
+from ._utils import get_affine_matrix, get_output_size, get_rot_2d, get_rot_3d, get_tensor_sequence
 
 
 def pad(x, padding, value=0.0):
@@ -185,7 +185,7 @@ def crop(x, pos, size, padding=None):
     return padded_x
 
 
-def affine_grid_sampling(input, theta, size=None, sample_mode="bilinear", padding_mode="zeros", align_corners=None):
+def affine_grid_sampling(input, theta, size=None, mode="nothing", sample_mode="bilinear", padding_mode="zeros", align_corners=None):
     """
     Placeholder for generating flow fields and grid sampling in one
     TODO: align_corners automatic decision if None
@@ -198,22 +198,68 @@ def affine_grid_sampling(input, theta, size=None, sample_mode="bilinear", paddin
     Args:
         input (torch.Tensor): The input tensor to transform
         theta (torch.Tensor): Batch of affine matrices
-        size (torch.Size): The output size
+        size (Optional[torch.Size]): The output size. Default is None, which returns the input's size
+        mode (str): The affine grid sampling mode - choose between crop (returns original size), minpad (returns minimum size that fits entire transformation), maxpax (returns the maximum size used to make linear transformation), or nothing (default, returns an actual affine transformation)
         sample_mode (str): See https://pytorch.org/docs/stable/generated/torch.nn.functional.grid_sample.html `mode` for information on sampling. (default: bilinear)
         padding_mode (str): See https://pytorch.org/docs/stable/generated/torch.nn.functional.grid_sample.html `padding_mode` for information on padding. (default: zeros)
         align_corners (bool): Whether to consider the edge pixel or its center the input's -1,1 extents. If None (default) will
 
     Returns:
         torch.tensor: The grid-sampled input, as determined by theta (the affine transformation matrix).
+
+    Raises:
+        ValueError: If the `mode` argument is not one of crop, minpad, maxpax, or nothing
     """
 
     if theta.ndim < 3 or theta.shape[0] == 1:
         theta = torch.broadcast_to(theta, (input.shape[0], *theta.shape[-2:]))
-    grid = t_F.affine_grid(theta, size or input.Size(), align_corners=align_corners).to(input.device)
-    return t_F.grid_sample(input, grid, mode=sample_mode, padding_mode=padding_mode, align_corners=align_corners)
+
+    if size is None:
+        size = input.shape
+
+    if mode in ("crop", "minpad", "maxpad"):
+        trailing = theta.shape[1]
+        inshape = input.shape[-trailing:]
+
+        output_size = get_output_size(inshape, theta, round=True)
+        max_size = output_size.max()
+
+        trailing_max = [max_size] * trailing
+        size = (*input.shape[:-trailing], *trailing_max)
+
+        grid = torch.empty(1, *trailing_max, trailing + 1, dtype=input.dtype, device=input.device)
+        for dim, steps in enumerate(trailing_max[::-1]):
+            space = torch.linspace(-max_size * 0.5 + 0.5, max_size * 0.5 - 0.5, steps=steps, device=input.device)
+            for _ in range(dim):
+                space = space.unsqueeze(-1)
+            grid[..., dim].copy_(space)
+        grid[..., -1].fill_(1)
+
+        theta1 = theta.transpose(1, 2) / (0.5 * torch.tensor(inshape[::-1], dtype=input.dtype, device=input.device))
+        grid = grid.view(1, -1, trailing + 1).bmm(theta1).view(1, *trailing_max, trailing)
+        sampled = t_F.grid_sample(input, grid, mode=sample_mode, padding_mode=padding_mode, align_corners=align_corners)
+
+        if mode == "crop":
+            crop_corner = (torch.tensor(size) - torch.tensor(input.shape)) // 2
+            crop_shape = input.shape
+            sampled = crop(sampled, crop_corner, crop_shape, padding=None)
+        elif mode == "minpad":
+            crop_corner = (torch.tensor(size)[-len(output_size) :] - output_size) // 2
+            crop_shape = output_size
+            sampled = crop(sampled, crop_corner, crop_shape, padding=None)
+        elif mode == "maxpad":
+            pass  # no need to crop here, we have the max padding
+
+    elif mode == "nothing":
+        grid = t_F.affine_grid(theta, size, align_corners=align_corners).to(input.device)
+        return t_F.grid_sample(input, grid, mode=sample_mode, padding_mode=padding_mode, align_corners=align_corners)
+    else:
+        raise ValueError(f"mode f{mode} not understood, please choose one of correct, minpad, maxpad, or nothing")
+
+    return sampled
 
 
-def rotate(input, angle, out_size=None, sample_mode="bilinear", padding_mode="zeros", align_corners=None):
+def rotate(input, angle, out_size=None, mode="crop", sample_mode="bilinear", padding_mode="zeros", align_corners=None):
     """
     Uses torch grid_sample to rotate spatial and volumetric data
     Currently not implemented for >3D (TODO: Implement ND grid sampling)
@@ -222,6 +268,7 @@ def rotate(input, angle, out_size=None, sample_mode="bilinear", padding_mode="ze
         input (torch.Tensor): input tensor to rotate
         angle (float or sequence of float): angle(s) to rotate the input in trailing order
         out_size (Optional[sequence]): The output size. If None, uses input.size() to determine the output size
+        mode (str): The affine grid sampling mode - choose between crop (returns original size), minpad (returns minimum size that fits entire transformation), maxpax (returns the maximum size used to make linear transformation), or nothing (returns an actual affine transformation, likely unwanted in rotation)
         sample_mode (str): See https://pytorch.org/docs/stable/generated/torch.nn.functional.grid_sample.html `mode` for information on sampling. (default: bilinear)
         padding_mode (str): See https://pytorch.org/docs/stable/generated/torch.nn.functional.grid_sample.html `padding_mode` for information on padding. (default: zeros)
         align_corners (bool): Whether to consider the edge pixel or its center the input's -1,1 extents. If None (default) will
@@ -251,5 +298,5 @@ def rotate(input, angle, out_size=None, sample_mode="bilinear", padding_mode="ze
         raise NotImplementedError(f"Rotation for len(angle) = {len(angle)} is not implemented")
 
     return affine_grid_sampling(
-        input, theta, out_size or input.size(), sample_mode=sample_mode, padding_mode=padding_mode, align_corners=align_corners
+        input, theta, out_size, mode=mode, sample_mode=sample_mode, padding_mode=padding_mode, align_corners=align_corners
     )

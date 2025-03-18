@@ -36,6 +36,7 @@ classifiers = [  #! Update me
 python = "^3.8"
 torch = ">= 1.13.1"
 torchvision = ">= 0.14.0"
+virtualenv = "^20.29.3"
 
 [tool.poetry.dev-dependencies]
 bandit = "^1.7.1"
