@@ -26,3 +26,4 @@
 - [ ] I've updated the code style using `make codestyle`.
 - [ ] I've written tests for all new methods and classes that I created.
 - [ ] I've written the docstring in Google format for all the methods and classes that I used.
+- [ ] I've added any new traNDsforms to the test_speed.py script and run `poetry run python3 test_speed.py`
