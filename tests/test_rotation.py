@@ -52,7 +52,7 @@ def test_rotate90(nd, expected):
 def test_rotate(input_shape, nd, rotation, keys, expected):
     """Test RandomRotate"""
     with pytest.raises(expected) if expected is not None else nullcontext():
-        rotator = RandomRotate(rotation, nd=nd, keys=keys, align_corners=True)
+        rotator = RandomRotate(rotation, nd=nd, keys=keys, align_corners=True, p=1.0)
 
         foo = torch.arange(prod(input_shape)).view(*input_shape).float()
         bar = torch.arange(prod(input_shape)).view(*input_shape).float()

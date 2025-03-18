@@ -1,7 +1,7 @@
 """Utility functions"""
 
-from typing import Sequence
-
+from collections.abc import Sequence
+from itertools import product
 from numbers import Number
 
 import numpy
@@ -165,3 +165,37 @@ def get_affine_matrix(rotation=None, translation=None, nd=None):
         translation = torch.zeros(rotation.shape[-2]).view(-1, 1)
 
     return torch.cat([rotation, translation], dim=-1)
+
+
+def get_output_size(shape, theta, round=False):
+    """
+    Calculate a theoretical output size for a certain shape given the transformation theta
+
+    Args:
+        shape (iterable, torch.Tensor, numpy.ndarray): Size of the data to be transformed
+        theta (torch.tensor): Transformation matrix
+        round (bool): Default false. Whether to return the precise size of the expanded output or the rounded long version
+
+    Returns:
+        torch.Tensor: the minimum size of the data to fit the entire transformation
+    """
+    if not isinstance(shape, torch.Tensor):
+        shape = torch.tensor(shape, dtype=theta.dtype, device=theta.device)
+
+    points = torch.tensor(list(product(*[[-0.5, 0.5] for _ in range(len(shape))], [1])), dtype=theta.dtype, device=theta.device)
+    points[..., :-1] *= shape
+
+    transformed_points = torch.matmul(points, theta.transpose(-1, -2))  # matmul the maximum points
+    mins, _ = transformed_points.squeeze().min(dim=0)
+    maxs, _ = transformed_points.squeeze().max(dim=0)
+
+    if round:
+        # this is a hack, sorry - it only works with 1e-4 afaics
+        # it is implemented to avoid float precision inaccuracies
+        # optimally, the calculation is something like
+        #   (maxs - mins).ceil().long(),
+        #   but this also produces errors in some circumstances where both the 1 and -1 indexed grid holds information
+        mins = ((mins / 1e-4).trunc_() * 1e-4).floor().long()
+        maxs = ((maxs / 1e-4).trunc_() * 1e-4).ceil().long()
+
+    return maxs - mins
